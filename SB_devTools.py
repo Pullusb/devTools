@@ -83,6 +83,8 @@ class debugPrintVariable(bpy.types.Operator):
     bl_description = "add a new line with debug print of selected text\n(replace clipboard)"
     bl_options = {"REGISTER"}
 
+    bpy.types.Scene.line_in_debug_print = bpy.props.BoolProperty(
+    name="include line num", description='include line number in print', default=False)
 
     def execute(self, context):
         #get current text object
@@ -91,7 +93,11 @@ class debugPrintVariable(bpy.types.Operator):
         #create debug print from variable selection
         charPos = text.current_character
         clip = copySelected()
-        debugPrint = print_string_variable(clip, linum=text.current_line_index+1)
+        if bpy.context.scene.line_in_debug_print:
+            debugPrint = print_string_variable(clip, linum=text.current_line_index+1)
+        else:
+            debugPrint = print_string_variable(clip)
+
         #send charpos at curent indentation (number of whitespace)
         heading_spaces = re.search('^(\s*).*', text.current_line.body).group(1)
 
@@ -169,6 +175,7 @@ class DevTools(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
+        layout.prop(context.scene, 'line_in_debug_print')
         layout.operator(debugPrintVariable.bl_idname)
         layout.separator()
         layout.operator(disableAllDebugPrint.bl_idname)
