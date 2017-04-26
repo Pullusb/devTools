@@ -14,6 +14,13 @@ Add buttons to texte-ditor toolbar:
 
 ### Updates
 
+26/04/2016:
+  - add text-editor shorctut:
+
+    - Ctrl+P : add "print(*selection*)"
+    - Ctrl+shift+P : trigger *print debug variable*
+    - Ctrl+L : Quote selection (with automatic quote or double quote selection)
+
 05/04/2016:
 
   - checkbox to enable/disable hardcode line number in print
