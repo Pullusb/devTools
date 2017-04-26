@@ -2,7 +2,7 @@ bl_info = {
     "name": "dev tools",
     "description": "Add tool to help developpement",
     "author": "Samuel Bernou",
-    "version": (0, 0, 1),
+    "version": (0, 0, 2),
     "blender": (2, 78, 0),
     "location": "Text editor > toolbar",
     "warning": "",
@@ -77,6 +77,63 @@ def get_text(context):
 
 ###---TASKS
 
+class simplePrint(bpy.types.Operator):
+    bl_idname = "devtools.simple_print"
+    bl_label = "Simple print text"
+    bl_description = "Add a new line with debug print of selected text\n(replace clipboard)"
+    bl_options = {"REGISTER"}
+
+    bpy.types.Scene.line_in_debug_print = bpy.props.BoolProperty(
+    name="include line num", description='include line number in print', default=False)
+
+    def execute(self, context):
+        #get current text object
+        text, override = get_text(context)
+
+        #create debug print from variable selection
+        charPos = text.current_character
+        clip = copySelected()
+        debugPrint = 'print({0})'.format(clip)#'print({0})#Dbg'
+
+        ###On a new line
+        # heading_spaces = re.search('^(\s*).*', text.current_line.body).group(1)
+        # new = Fixindentation(debugPrint, len(heading_spaces))#to insert at selection level : charPos
+        # bpy.ops.text.move(override, type='LINE_END')
+        # bpy.ops.text.insert(override, text= '\n'+new)
+        
+        ### In place
+        bpy.ops.text.insert(override, text=debugPrint)
+        return {"FINISHED"}
+
+class quote(bpy.types.Operator):
+    bl_idname = "devtools.quote"
+    bl_label = "quote text"
+    bl_description = "quote text"
+    bl_options = {"REGISTER"}
+
+    bpy.types.Scene.line_in_debug_print = bpy.props.BoolProperty(
+    name="include line num", description='include line number in print', default=False)
+
+    def execute(self, context):
+        text, override = get_text(context)
+        charPos = text.current_character
+        clip = copySelected()
+        if '"' in clip:
+            debugPrint = "'{0}'".format(clip)#'print({0})#Dbg'
+        else:
+            debugPrint = '"{0}"'.format(clip)
+
+        ###On a new line
+        # heading_spaces = re.search('^(\s*).*', text.current_line.body).group(1)
+        # new = Fixindentation(debugPrint, len(heading_spaces))#to insert at selection level : charPos
+        # bpy.ops.text.move(override, type='LINE_END')
+        # bpy.ops.text.insert(override, text= '\n'+new)
+        
+        ### In place
+        bpy.ops.text.insert(override, text=debugPrint)
+        return {"FINISHED"}
+
+
 class debugPrintVariable(bpy.types.Operator):
     bl_idname = "devtools.debug_print_variable"
     bl_label = "Debug Print Variable"
@@ -98,7 +155,7 @@ class debugPrintVariable(bpy.types.Operator):
         else:
             debugPrint = print_string_variable(clip)
 
-        #send charpos at curent indentation (number of whitespace)
+        #send charpos at current indentation (number of whitespace)
         heading_spaces = re.search('^(\s*).*', text.current_line.body).group(1)
 
         new = Fixindentation(debugPrint, len(heading_spaces))#to insert at selection level : charPos
@@ -111,6 +168,7 @@ class debugPrintVariable(bpy.types.Operator):
         #put a return and paste with indentation
         bpy.ops.text.insert(override, text= '\n'+new)
         return {"FINISHED"}
+
 
 
 class disableAllDebugPrint(bpy.types.Operator):
@@ -136,6 +194,7 @@ class disableAllDebugPrint(bpy.types.Operator):
             mess = 'No line commented'
         self.report({'INFO'}, mess)
         return {"FINISHED"}
+
 
 
 class enableAllDebugPrint(bpy.types.Operator):
@@ -182,11 +241,37 @@ class DevTools(bpy.types.Panel):
         layout.operator(enableAllDebugPrint.bl_idname)
 
 
+###---KEYMAP
+
+addon_keymaps = []
+def register_keymaps():
+    wm = bpy.context.window_manager
+    addon = bpy.context.window_manager.keyconfigs.addon
+    km = wm.keyconfigs.addon.keymaps.new(name = "Text", space_type = "TEXT_EDITOR")
+    
+    kmi = km.keymap_items.new("devtools.simple_print", type = "P", value = "PRESS", ctrl = True)
+    kmi = km.keymap_items.new("devtools.debug_print_variable", type = "P", value = "PRESS", ctrl = True, shift = True)
+    kmi = km.keymap_items.new("devtools.quote", type = "L", value = "PRESS", ctrl = True)
+    
+    addon_keymaps.append(km)
+
+def unregister_keymaps():
+    wm = bpy.context.window_manager
+    for km in addon_keymaps:
+        for kmi in km.keymap_items:
+            km.keymap_items.remove(kmi)
+        wm.keyconfigs.addon.keymaps.remove(km)
+    addon_keymaps.clear()
+
+
+###---REGISTER
 
 def register():
+    register_keymaps()
     bpy.utils.register_module(__name__)
 
 def unregister():
+    unregister_keymaps()
     bpy.utils.unregister_module(__name__)
 
 if __name__ == "__main__":
