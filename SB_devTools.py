@@ -2,7 +2,7 @@ bl_info = {
     "name": "dev tools",
     "description": "Add tool to help developpement",
     "author": "Samuel Bernou",
-    "version": (0, 0, 2),
+    "version": (0, 0, 3),
     "blender": (2, 78, 0),
     "location": "Text editor > toolbar",
     "warning": "",
@@ -100,7 +100,7 @@ class simplePrint(bpy.types.Operator):
         # new = Fixindentation(debugPrint, len(heading_spaces))#to insert at selection level : charPos
         # bpy.ops.text.move(override, type='LINE_END')
         # bpy.ops.text.insert(override, text= '\n'+new)
-        
+
         ### In place
         bpy.ops.text.insert(override, text=debugPrint)
         return {"FINISHED"}
@@ -128,7 +128,7 @@ class quote(bpy.types.Operator):
         # new = Fixindentation(debugPrint, len(heading_spaces))#to insert at selection level : charPos
         # bpy.ops.text.move(override, type='LINE_END')
         # bpy.ops.text.insert(override, text= '\n'+new)
-        
+
         ### In place
         bpy.ops.text.insert(override, text=debugPrint)
         return {"FINISHED"}
@@ -198,7 +198,7 @@ class disableAllDebugPrint(bpy.types.Operator):
 
 
 class enableAllDebugPrint(bpy.types.Operator):
-    bl_idname = "my_operator.enable_all_debug_print"
+    bl_idname = "devtools.enable_all_debug_print"
     bl_label = "Enable all debug print"
     bl_description = "uncomment all lines finishing wih '#Dbg'"
     bl_options = {"REGISTER"}
@@ -223,6 +223,23 @@ class enableAllDebugPrint(bpy.types.Operator):
         return {"FINISHED"}
 
 
+class expandShortcutName(bpy.types.Operator):
+    bl_idname = "devtools.expand_shortcut_name"
+    bl_label = "Expand text shortcuts"
+    bl_description = "replace 'C.etc' by 'bpy.context.etc'\n and 'D.etc' by 'bpy.data.etc'"
+    bl_options = {"REGISTER"}
+
+    def execute(self, context):
+        text, override = get_text(context)
+        rxc = re.compile(r'C(?=\.)')#(?<=[^A-Za-z0-9\.])C(?=\.)
+        rxd = re.compile(r'D(?=\.)')#(?<=[^A-Za-z0-9\.])D(?=\.)
+        for line in text.lines:
+            line.body = rxc.sub('bpy.context', line.body)
+            line.body = rxd.sub('bpy.data', line.body)
+
+        return {"FINISHED"}
+
+
 
 ###---PANEL
 
@@ -239,6 +256,8 @@ class DevTools(bpy.types.Panel):
         layout.separator()
         layout.operator(disableAllDebugPrint.bl_idname)
         layout.operator(enableAllDebugPrint.bl_idname)
+        layout.separator()
+        layout.operator(expandShortcutName.bl_idname)
 
 
 ###---KEYMAP
@@ -248,11 +267,11 @@ def register_keymaps():
     wm = bpy.context.window_manager
     addon = bpy.context.window_manager.keyconfigs.addon
     km = wm.keyconfigs.addon.keymaps.new(name = "Text", space_type = "TEXT_EDITOR")
-    
+
     kmi = km.keymap_items.new("devtools.simple_print", type = "P", value = "PRESS", ctrl = True)
     kmi = km.keymap_items.new("devtools.debug_print_variable", type = "P", value = "PRESS", ctrl = True, shift = True)
     kmi = km.keymap_items.new("devtools.quote", type = "L", value = "PRESS", ctrl = True)
-    
+
     addon_keymaps.append(km)
 
 def unregister_keymaps():
