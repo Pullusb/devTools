@@ -12,8 +12,18 @@ Add buttons to texte-ditor toolbar:
 - Enable all debug
 - Expand text shortcuts - Replace _C._ with _bpy.context._ and _D._ with _bpy.data_
 
+Add text-editor shorctut:
+
+- Ctrl+Shift+I : add a quick import/classic module statement at cursor
+- Ctrl+P : add "print(*selection*)"
+- Ctrl+shift+P : trigger *print debug variable*
+- Ctrl+L : Quote selection (with automatic quote or double quote choice)
+
 
 ### Updates
+
+20/06/2017:
+  - add text-editor shorctut: Ctrl+Shift+I : write a quick import/classic module statement
 
 13/06/2017:
   - add C and D text shortcut expansion
