@@ -2,7 +2,7 @@ bl_info = {
     "name": "dev tools",
     "description": "Add tool to help developpement",
     "author": "Samuel Bernou",
-    "version": (0, 0, 3),
+    "version": (1, 0, 0),
     "blender": (2, 78, 0),
     "location": "Text editor > toolbar",
     "warning": "",
@@ -131,6 +131,23 @@ class quote(bpy.types.Operator):
 
         ### In place
         bpy.ops.text.insert(override, text=debugPrint)
+        return {"FINISHED"}
+
+
+class insert_import(bpy.types.Operator):
+    bl_idname = "devtools.insert_import"
+    bl_label = "insert import text"
+    bl_description = "import text"
+    bl_options = {"REGISTER"}
+
+
+    def execute(self, context):
+        text, override = get_text(context)
+        charPos = text.current_character
+        #clip = copySelected()
+        import_text = "import bpy\nimport os\nimport re, fnmatch, glob\nfrom mathutils import Vector\nC = bpy.context\nD = bpy.data\nscn = C.scene\n"
+        
+        bpy.ops.text.insert(override, text=import_text)
         return {"FINISHED"}
 
 
@@ -271,6 +288,7 @@ def register_keymaps():
     kmi = km.keymap_items.new("devtools.simple_print", type = "P", value = "PRESS", ctrl = True)
     kmi = km.keymap_items.new("devtools.debug_print_variable", type = "P", value = "PRESS", ctrl = True, shift = True)
     kmi = km.keymap_items.new("devtools.quote", type = "L", value = "PRESS", ctrl = True)
+    kmi = km.keymap_items.new("devtools.insert_import", type = "I", value = "PRESS", ctrl = True, shift=True)
 
     addon_keymaps.append(km)
 
