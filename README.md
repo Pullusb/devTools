@@ -5,12 +5,13 @@ Blender addon - add developpement tools to blender texte editor
 
 ### Description
 
-Add buttons to texte-ditor toolbar:
+Add buttons to text-editor toolbar:
 
 - Print debug variable - Add a line in text to print selected variable on next execution
 - Disable all debug - Comment all lines terminating with "#Dbg" (like the print debug variable do)
 - Enable all debug
 - Expand text shortcuts - Replace _C._ with _bpy.context._ and _D._ with _bpy.data_
+- Text diff external - print a diff with internal text and external source in console (appears only if file is external)
 
 Add text-editor shorctut:
 
