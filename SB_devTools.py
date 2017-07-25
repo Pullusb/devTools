@@ -258,7 +258,7 @@ class expandShortcutName(bpy.types.Operator):
 
 class textDiff(bpy.types.Operator):
     bl_idname = "devtools.diff_internal_external"
-    bl_label = "text diff external"
+    bl_label = "Text diff external"
     bl_description = "print dif in console with the difference between current internal file and external saved version"
     bl_options = {"REGISTER"}
 
