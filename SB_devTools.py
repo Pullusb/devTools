@@ -2,17 +2,17 @@ bl_info = {
     "name": "dev tools",
     "description": "Add tool to help developpement",
     "author": "Samuel Bernou",
-    "version": (1, 0, 0),
+    "version": (1, 0, 2),
     "blender": (2, 78, 0),
     "location": "Text editor > toolbar",
     "warning": "",
     "wiki_url": "",
     "category": "Text Editor" }
 
-
 import bpy
 import os
 import re
+import difflib
 
 ###---UTILITY funcs
 
@@ -55,7 +55,7 @@ def Fixindentation(Loaded_text, charPos):
 
 def re_split_line(line):
     '''
-    take a line string anr return a 3 element list:
+    take a line string and return a 3 element list:
     [ heading spaces (id any), '# '(if any), rest ot the string ]
     '''
     r = re.search(r'^(\s*)(#*\s?)(.*)', line)
@@ -145,8 +145,8 @@ class insert_import(bpy.types.Operator):
         text, override = get_text(context)
         charPos = text.current_character
         #clip = copySelected()
-        import_text = "import bpy\nimport os\nimport re, fnmatch, glob\nfrom mathutils import Vector\nC = bpy.context\nD = bpy.data\nscn = C.scene\n"
-        
+        import_text = "# coding: utf-8\nimport bpy\nimport os\nimport re, fnmatch, glob\nfrom mathutils import Vector\nC = bpy.context\nD = bpy.data\nscn = C.scene\n"
+
         bpy.ops.text.insert(override, text=import_text)
         return {"FINISHED"}
 
@@ -256,6 +256,46 @@ class expandShortcutName(bpy.types.Operator):
 
         return {"FINISHED"}
 
+class textDiff(bpy.types.Operator):
+    bl_idname = "devtools.diff_internal_external"
+    bl_label = "text diff external"
+    bl_description = "print dif in console with the difference between current internal file and external saved version"
+    bl_options = {"REGISTER"}
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def execute(self, context):
+        text, override = get_text(context)
+        if text.filepath:
+            if text.is_dirty:
+                print(8*'- ')
+
+                internal = [l.body for l in text.lines]#get line from internal
+                with open(text.filepath, 'r') as fd:
+                    ext = fd.read().splitlines()
+
+                changes = difflib.context_diff(internal,ext,fromfile='local', tofile='external')
+                #changes = difflib.unified_diff(internal,ext)
+                #print('changes')
+
+                #print(linecount)
+                print (str((len(internal))) + ' internal\n' + str((len(ext))) + ' external\n')
+
+                for change in changes:
+                    if not change.startswith(' '):
+                        print(change)
+                mess = 'look the diff in console'
+
+            else:
+                mess = 'file is synced'
+
+        else:
+            mess = 'text is internal only'
+
+        self.report({'INFO'}, mess)
+        return {"FINISHED"}
 
 
 ###---PANEL
@@ -275,6 +315,9 @@ class DevTools(bpy.types.Panel):
         layout.operator(enableAllDebugPrint.bl_idname)
         layout.separator()
         layout.operator(expandShortcutName.bl_idname)
+        if get_text(context)[0].filepath:#mask button if file is pure internal
+            layout.separator()
+            layout.operator(textDiff.bl_idname)
 
 
 ###---KEYMAP
