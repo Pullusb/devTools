@@ -347,8 +347,8 @@ def unregister_keymaps():
 ###---REGISTER
 
 def register():
-    register_keymaps()
     bpy.utils.register_module(__name__)
+    register_keymaps()
 
 def unregister():
     unregister_keymaps()
