@@ -2,7 +2,7 @@ bl_info = {
     "name": "dev tools",
     "description": "Add tool to help developpement",
     "author": "Samuel Bernou",
-    "version": (1, 0, 2),
+    "version": (1, 0, 3),
     "blender": (2, 78, 0),
     "location": "Text editor > toolbar",
     "warning": "",
@@ -269,7 +269,7 @@ class textDiff(bpy.types.Operator):
     def execute(self, context):
         text, override = get_text(context)
         if text.filepath:
-            if text.is_dirty:
+            if text.is_dirty or text.is_modified:
                 print(8*'- ')
 
                 internal = [l.body for l in text.lines]#get line from internal
