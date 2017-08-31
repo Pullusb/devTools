@@ -23,6 +23,9 @@ Add text-editor shorctut:
 
 ### Updates
 
+31/08/2017
+  - add button to print difference between internal and external code in console
+
 20/06/2017:
   - add text-editor shorctut: Ctrl+Shift+I : write a quick import/classic module statement
 
