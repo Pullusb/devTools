@@ -2,7 +2,7 @@ bl_info = {
     "name": "dev tools",
     "description": "Add tool to help developpement",
     "author": "Samuel Bernou",
-    "version": (1, 0, 3),
+    "version": (1, 0, 4),
     "blender": (2, 78, 0),
     "location": "Text editor > toolbar",
     "warning": "",
@@ -13,8 +13,44 @@ import bpy
 import os
 import re
 import difflib
+from sys import platform
 
 ###---UTILITY funcs
+
+def openFile(filepath):
+    """
+    open the folder at the path given
+    with cmd relative to user's OS
+    """
+    myOS = platform
+    if myOS.startswith('linux') or myOS.startswith('freebsd'):
+        # linux
+        cmd = 'xdg-open '
+        #print("operating system : Linux")
+    elif myOS.startswith('win'):
+        # Windows
+        cmd = 'start '
+        # cmd = 'explorer '
+        #print("operating system : Windows")
+        if not filepath:
+            return('/')
+
+    else:#elif myOS == "darwin":
+        # OS X
+        #print("operating system : MACos")
+        cmd = 'open '
+
+    if not filepath:
+        return('//')
+
+    #double quote the path to avoid problem with special character
+    filepath = '"' + filepath + '"'
+    fullcmd = cmd + filepath
+
+    #print & launch open command
+    #print(fullcmd)
+    os.system(fullcmd)
+    return fullcmd
 
 def copySelected():
     '''Copy selected Text'''
@@ -297,6 +333,26 @@ class textDiff(bpy.types.Operator):
         self.report({'INFO'}, mess)
         return {"FINISHED"}
 
+class openExternalEditor_OP(bpy.types.Operator):
+    bl_idname = "devtools.open_in_default_editor"
+    bl_label = "Open externally"
+    bl_description = "Open in external default editor"
+    bl_options = {"REGISTER"}
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def execute(self, context):
+        text, override = get_text(context)
+        if text.filepath:#not necessary, button masked if no external data
+            mess = openFile(text.filepath)
+        else:
+            mess = 'Text is internal only'
+
+        self.report({'INFO'}, mess)
+        return {"FINISHED"}
+
 
 ###---PANEL
 
@@ -318,6 +374,7 @@ class DevTools(bpy.types.Panel):
         if get_text(context)[0].filepath:#mask button if file is pure internal
             layout.separator()
             layout.operator(textDiff.bl_idname)
+            layout.operator(openExternalEditor_OP.bl_idname)
 
 
 ###---KEYMAP
