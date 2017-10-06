@@ -18,37 +18,32 @@ from sys import platform
 ###---UTILITY funcs
 
 def openFile(filepath):
-    """
-    open the folder at the path given
-    with cmd relative to user's OS
-    """
+    '''open the file at the path given with cmd relative to user's OS'''
+    if not filepath:
+        return('No file path !')
+
     myOS = platform
     if myOS.startswith('linux') or myOS.startswith('freebsd'):
         # linux
         cmd = 'xdg-open '
-        #print("operating system : Linux")
+        #print("operating system : Linux")#Dbg
     elif myOS.startswith('win'):
         # Windows
         cmd = 'start '
-        # cmd = 'explorer '
-        #print("operating system : Windows")
-        if not filepath:
-            return('/')
+        # cmd = 'explorer '#for folder
+        #print("operating system : Windows")#Dbg
 
     else:#elif myOS == "darwin":
         # OS X
-        #print("operating system : MACos")
+        #print("operating system : MACos")#Dbg
         cmd = 'open '
-
-    if not filepath:
-        return('//')
 
     #double quote the path to avoid problem with special character
     filepath = '"' + filepath + '"'
     fullcmd = cmd + filepath
 
-    #print & launch open command
-    #print(fullcmd)
+    #launch open command
+    #print(fullcmd)#Dbg
     os.system(fullcmd)
     return fullcmd
 
@@ -336,7 +331,7 @@ class textDiff(bpy.types.Operator):
 class openExternalEditor_OP(bpy.types.Operator):
     bl_idname = "devtools.open_in_default_editor"
     bl_label = "Open externally"
-    bl_description = "Open in external default editor"
+    bl_description = "Open in external default editor or associated program"
     bl_options = {"REGISTER"}
 
     @classmethod
