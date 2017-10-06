@@ -11,7 +11,8 @@ Add buttons to text-editor toolbar:
 - Disable all debug - Comment all lines terminating with "#Dbg" (like the print debug variable do)
 - Enable all debug
 - Expand text shortcuts - Replace _C._ with _bpy.context._ and _D._ with _bpy.data_
-- Text diff external - print a diff with internal text and external source in console (appears only if file is external)
+- Text diff external - Print a diff with internal text and external source in console (appears only if file is external)
+- Open externally - Open in external default editor or associated program
 
 Add text-editor shorctut:
 
@@ -22,6 +23,9 @@ Add text-editor shorctut:
 
 
 ### Updates
+
+06/10/2017:
+  - add button to open in external default editor
 
 31/08/2017
   - add button to print difference between internal and external code in console
