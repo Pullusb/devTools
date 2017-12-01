@@ -2,7 +2,7 @@ bl_info = {
     "name": "dev tools",
     "description": "Add tool to help developpement",
     "author": "Samuel Bernou",
-    "version": (1, 0, 4),
+    "version": (1, 0, 5),
     "blender": (2, 78, 0),
     "location": "Text editor > toolbar",
     "warning": "",
@@ -174,6 +174,11 @@ class insert_import(bpy.types.Operator):
 
     def execute(self, context):
         text, override = get_text(context)
+        #create new text-block if not any
+        if text == None:
+            text = bpy.data.texts.new('Text')
+            context.space_data.text = text
+            text, override = get_text(context)#reget_override
         charPos = text.current_character
         #clip = copySelected()
         import_text = "# coding: utf-8\nimport bpy\nimport os\nimport re, fnmatch, glob\nfrom mathutils import Vector\nC = bpy.context\nD = bpy.data\nscn = C.scene\n"
