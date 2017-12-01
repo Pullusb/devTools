@@ -24,6 +24,9 @@ Add text-editor shorctut:
 
 ### Updates
 
+01/12/2017:  
+  - Ctrl+Shift+I create the text block if not any (it does the "ctrl+n" for you ;) )
+
 06/10/2017:
   - add button to open in external default editor
 
