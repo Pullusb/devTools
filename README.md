@@ -24,6 +24,9 @@ Add text-editor shorctut:
 
 ### Updates
 
+19/12/2017 - 1.0.6 :  
+  - Fix problem when file seems unsync to blender but there is no difference (print 'no diff detected')
+  
 01/12/2017:  
   - Ctrl+Shift+I create the text block if not any (it does the "ctrl+n" for you ;) )
 
