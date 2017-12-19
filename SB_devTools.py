@@ -2,7 +2,7 @@ bl_info = {
     "name": "dev tools",
     "description": "Add tool to help developpement",
     "author": "Samuel Bernou",
-    "version": (1, 0, 5),
+    "version": (1, 0, 6),
     "blender": (2, 78, 0),
     "location": "Text editor > toolbar",
     "warning": "",
@@ -309,21 +309,26 @@ class textDiff(bpy.types.Operator):
                 print(8*'- ')
 
                 internal = [l.body for l in text.lines]#get line from internal
-                with open(text.filepath, 'r') as fd:
+                fp = text.filepath
+                #print("text-filepath", fp)#Dbg
+                fp = bpy.path.abspath(fp)
+                #print("abs_path", fp)#Dbg
+                with open(fp, 'r') as fd:
                     ext = fd.read().splitlines()
 
                 changes = difflib.context_diff(internal,ext,fromfile='local', tofile='external')
                 #changes = difflib.unified_diff(internal,ext)
-                #print('changes')
 
                 #print(linecount)
                 print (str((len(internal))) + ' internal\n' + str((len(ext))) + ' external\n')
 
-                for change in changes:
-                    if not change.startswith(' '):
-                        print(change)
-                mess = 'look the diff in console'
-
+                if [c for c in changes]:#if diff generator  is not empty
+                    for change in changes:
+                        if not change.startswith(' '):
+                            print(change)
+                    mess = 'look the diff in console'
+                else:
+                    mess = 'no diff detected'
             else:
                 mess = 'file is synced'
 
