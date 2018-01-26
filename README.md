@@ -1,5 +1,7 @@
 # devTools
 Blender addon - add developpement tools to blender texte editor
+  
+**[Download latest](https://raw.githubusercontent.com/Pullusb/devTools/master/SB_devTools.py)** (right click, save Target as)
 
 ---
 
