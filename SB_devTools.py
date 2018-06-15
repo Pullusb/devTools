@@ -376,7 +376,8 @@ class DevTools(bpy.types.Panel):
         layout.operator(enableAllDebugPrint.bl_idname)
         layout.separator()
         layout.operator(expandShortcutName.bl_idname)
-        if get_text(context)[0].filepath:#mask button if file is pure internal
+        text,override = get_text(context)
+        if text and text.filepath :#mask button if file is pure internal
             layout.separator()
             layout.operator(textDiff.bl_idname)
             layout.operator(openExternalEditor_OP.bl_idname)
