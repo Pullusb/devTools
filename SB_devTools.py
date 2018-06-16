@@ -422,7 +422,7 @@ class openExternalEditor_OP(bpy.types.Operator):
 
 class openScriptFolder_OP(bpy.types.Operator):
     bl_idname = "devtools.open_script_folder"
-    bl_label = "Open Folder"
+    bl_label = "Open folder"
     bl_description = "Open text folder in OS browser"
     bl_options = {"REGISTER"}
 
