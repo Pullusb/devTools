@@ -2,7 +2,7 @@ bl_info = {
     "name": "dev tools",
     "description": "Add tool to help developpement",
     "author": "Samuel Bernou",
-    "version": (1, 0, 6),
+    "version": (1, 0, 7),
     "blender": (2, 78, 0),
     "location": "Text editor > toolbar",
     "warning": "",
@@ -17,35 +17,71 @@ from sys import platform
 
 ###---UTILITY funcs
 
+def openFolder(folderpath):
+    """
+    open the folder at the path given
+    with cmd relative to user's OS
+    """
+    myOS = platform
+    if myOS.startswith(('linux','freebsd')):
+        cmd = 'xdg-open'
+    elif myOS.startswith('win'):
+        cmd = 'explorer'
+        if not folderpath:
+            return('/')
+    else:
+        cmd = 'open'
+ 
+    if not folderpath:
+        return('//')
+ 
+    cmd = cmd if cmd.endswith(' ') else cmd+' '
+    folderpath = '"%s"' % folderpath
+    fullcmd = '%s %s' % (cmd, folderpath)
+    print(fullcmd)
+    os.system(fullcmd)
+    return fullcmd
+
+
 def openFile(filepath):
     '''open the file at the path given with cmd relative to user's OS'''
+    user_preferences = bpy.context.user_preferences
+    addon_prefs = user_preferences.addons[__name__].preferences
+    editor = addon_prefs.external_editor
+
     if not filepath:
         return('No file path !')
 
-    myOS = platform
-    if myOS.startswith('linux') or myOS.startswith('freebsd'):
-        # linux
-        cmd = 'xdg-open '
-        #print("operating system : Linux")#Dbg
-    elif myOS.startswith('win'):
-        # Windows
-        cmd = 'start '
-        # cmd = 'explorer '#for folder
-        #print("operating system : Windows")#Dbg
+    if editor:
+        cmd = editor
+    else:
+        myOS = platform
+        if myOS.startswith('linux') or myOS.startswith('freebsd'):# linux
+            cmd = 'xdg-open'
+        elif myOS.startswith('win'):# Windows
+            cmd = 'start'
+        else:# OS X
+            cmd = 'open'
 
-    else:#elif myOS == "darwin":
-        # OS X
-        #print("operating system : MACos")#Dbg
-        cmd = 'open '
-
-    #double quote the path to avoid problem with special character
-    filepath = '"' + filepath + '"'
-    fullcmd = cmd + filepath
-
+    #ensure trailing space
+    #filepath = '"%s"' % filepath
+    mess = cmd + ' ' + filepath
+    fullcmd = [cmd,filepath]
     #launch open command
-    #print(fullcmd)#Dbg
-    os.system(fullcmd)
-    return fullcmd
+    print(fullcmd)#Dbg
+    #os.system(fullcmd)
+
+    import subprocess
+    try:
+        subprocess.Popen(fullcmd)
+    except:
+        import traceback
+        traceback.print_exc()
+        mess = 'Text editor not found ' + mess
+        return {'CANCELLED'}
+
+
+    return mess
 
 def copySelected():
     '''Copy selected Text'''
@@ -117,6 +153,10 @@ class simplePrint(bpy.types.Operator):
     bpy.types.Scene.line_in_debug_print = bpy.props.BoolProperty(
     name="include line num", description='include line number in print', default=False)
 
+    @classmethod
+    def poll(cls, context):
+        return context.area.type == 'TEXT_EDITOR'
+
     def execute(self, context):
         #get current text object
         text, override = get_text(context)
@@ -145,6 +185,10 @@ class quote(bpy.types.Operator):
     bpy.types.Scene.line_in_debug_print = bpy.props.BoolProperty(
     name="include line num", description='include line number in print', default=False)
 
+    @classmethod
+    def poll(cls, context):
+        return context.area.type == 'TEXT_EDITOR'
+
     def execute(self, context):
         text, override = get_text(context)
         charPos = text.current_character
@@ -171,6 +215,9 @@ class insert_import(bpy.types.Operator):
     bl_description = "import text"
     bl_options = {"REGISTER"}
 
+    @classmethod
+    def poll(cls, context):
+        return context.area.type == 'TEXT_EDITOR'
 
     def execute(self, context):
         text, override = get_text(context)
@@ -195,6 +242,10 @@ class debugPrintVariable(bpy.types.Operator):
 
     bpy.types.Scene.line_in_debug_print = bpy.props.BoolProperty(
     name="include line num", description='include line number in print', default=False)
+
+    @classmethod
+    def poll(cls, context):
+        return context.area.type == 'TEXT_EDITOR'
 
     def execute(self, context):
         #get current text object
@@ -230,6 +281,10 @@ class disableAllDebugPrint(bpy.types.Operator):
     bl_description = "comment all lines finishing with '#Dbg'"
     bl_options = {"REGISTER"}
 
+    @classmethod
+    def poll(cls, context):
+        return context.area.type == 'TEXT_EDITOR'
+
     def execute(self, context):
         text, override = get_text(context)
         count = 0
@@ -256,6 +311,9 @@ class enableAllDebugPrint(bpy.types.Operator):
     bl_description = "uncomment all lines finishing wih '#Dbg'"
     bl_options = {"REGISTER"}
 
+    @classmethod
+    def poll(cls, context):
+        return context.area.type == 'TEXT_EDITOR'
 
     def execute(self, context):
         text, override = get_text(context)
@@ -282,6 +340,10 @@ class expandShortcutName(bpy.types.Operator):
     bl_description = "replace 'C.etc' by 'bpy.context.etc'\n and 'D.etc' by 'bpy.data.etc'"
     bl_options = {"REGISTER"}
 
+    @classmethod
+    def poll(cls, context):
+        return context.area.type == 'TEXT_EDITOR'
+
     def execute(self, context):
         text, override = get_text(context)
         rxc = re.compile(r'C(?=\.)')#(?<=[^A-Za-z0-9\.])C(?=\.)
@@ -300,7 +362,7 @@ class textDiff(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return True
+        return context.area.type == 'TEXT_EDITOR'
 
     def execute(self, context):
         text, override = get_text(context)
@@ -341,12 +403,12 @@ class textDiff(bpy.types.Operator):
 class openExternalEditor_OP(bpy.types.Operator):
     bl_idname = "devtools.open_in_default_editor"
     bl_label = "Open externally"
-    bl_description = "Open in external default editor or associated program"
+    bl_description = "Open in external default program or software specified in addon preferences"
     bl_options = {"REGISTER"}
 
     @classmethod
     def poll(cls, context):
-        return True
+        return context.area.type == 'TEXT_EDITOR'
 
     def execute(self, context):
         text, override = get_text(context)
@@ -357,6 +419,27 @@ class openExternalEditor_OP(bpy.types.Operator):
 
         self.report({'INFO'}, mess)
         return {"FINISHED"}
+
+class openScriptFolder_OP(bpy.types.Operator):
+    bl_idname = "devtools.open_script_folder"
+    bl_label = "Open Folder"
+    bl_description = "Open text folder in OS browser"
+    bl_options = {"REGISTER"}
+
+    @classmethod
+    def poll(cls, context):
+        return context.area.type == 'TEXT_EDITOR'
+
+    def execute(self, context):
+        text, override = get_text(context)
+        if text.filepath:
+            mess = openFolder(os.path.dirname(text.filepath))
+        else:
+            mess = 'Text is internal only'
+
+        self.report({'INFO'}, mess)
+        return {"FINISHED"}
+
 
 
 ###---PANEL
@@ -376,11 +459,28 @@ class DevTools(bpy.types.Panel):
         layout.operator(enableAllDebugPrint.bl_idname)
         layout.separator()
         layout.operator(expandShortcutName.bl_idname)
+
+        #When text is saved externally draw more option
         text,override = get_text(context)
         if text and text.filepath :#mask button if file is pure internal
             layout.separator()
             layout.operator(textDiff.bl_idname)
+            layout.operator(openScriptFolder_OP.bl_idname)
             layout.operator(openExternalEditor_OP.bl_idname)
+
+###---PREF PANEL
+
+class Dev_tools_addon_pref(bpy.types.AddonPreferences):
+    bl_idname = __name__
+
+    external_editor = bpy.props.StringProperty(
+            name="External Editor",
+            subtype='FILE_PATH',
+            )
+
+    def draw(self, context):
+        layout = self.layout
+        layout.prop(self, "external_editor")
 
 
 ###---KEYMAP
@@ -405,6 +505,7 @@ def unregister_keymaps():
             km.keymap_items.remove(kmi)
         wm.keyconfigs.addon.keymaps.remove(km)
     addon_keymaps.clear()
+
 
 
 ###---REGISTER
