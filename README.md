@@ -14,6 +14,7 @@ Add buttons to text-editor toolbar:
 - Enable all debug
 - Expand text shortcuts - Replace _C._ with _bpy.context._ and _D._ with _bpy.data_
 - Text diff external - Print a diff with internal text and external source in console (appears only if file is external)
+- Open folder - Open folder where text is located in OS browser
 - Open externally - Open in external default editor or associated program
 
 Add text-editor shorctut:
@@ -25,6 +26,10 @@ Add text-editor shorctut:
 
 
 ### Updates
+
+17/06/2018 - 1.0.7:
+  - added button to open folder location in OS browser
+  - Bugfix, open in external exditor now work in windows
 
 19/12/2017 - 1.0.6 :  
   - Fix problem when file seems unsync to blender but there is no difference (print 'no diff detected')
