@@ -233,6 +233,30 @@ class DEV_OT_insert_import(bpy.types.Operator):
         bpy.ops.text.insert(override, text=import_text)
         return {"FINISHED"}
 
+class DEV_OT_new_text_block(bpy.types.Operator):
+    bl_idname = "devtools.new_text_block"
+    bl_label = "New text block"
+    bl_description = "Create a new text block"
+    bl_options = {"REGISTER"}
+
+    @classmethod
+    def poll(cls, context):
+        return context.area.type == 'TEXT_EDITOR'
+
+    def execute(self, context):
+        #new text even if there is alredy one.
+        text = bpy.data.texts.new('Text')
+        context.space_data.text = text
+        #only if there is no Text
+        '''
+        text, override = get_text(context)
+        #create new text-block if not any
+        if text == None:
+            text = bpy.data.texts.new('Text')
+            context.space_data.text = text
+            # text, override = get_text(context)#reget_override
+        '''
+        return {"FINISHED"}
 
 class DEV_OT_debugPrintVariable(bpy.types.Operator):
     bl_idname = "devtools.debug_print_variable"
@@ -403,21 +427,13 @@ class DEV_OT_writeClassesTuple(bpy.types.Operator):
         text, override = get_text(context)
 
         block = 'classes = (\n'
-        for line in src.lines:
+        for line in text.lines:
             if line.body.startswith('class '):
                 block += '{},\n'.format(re.search(r'class (.*)\(.*', line.body).group(1))
         block += ')'
         text.write(block)
 
         return {"FINISHED"}
-
-src= bpy.data.texts['src']
-dest=bpy.data.texts['Text']
-dest.write('classes = (')
-for line in src.lines:
-    if line.body.startswith('class '):
-        dest.write('{},\n'.format(re.search(r'class (.*)\(.*', line.body).group(1)))
-dest.write(')')
 
 class DEV_OT_textDiff(bpy.types.Operator):
     bl_idname = "devtools.diff_internal_external"
@@ -564,6 +580,7 @@ def register_keymaps():
     kmi = km.keymap_items.new("devtools.debug_print_variable", type = "P", value = "PRESS", ctrl = True, shift = True)
     kmi = km.keymap_items.new("devtools.quote", type = "L", value = "PRESS", ctrl = True)
     kmi = km.keymap_items.new("devtools.insert_import", type = "I", value = "PRESS", ctrl = True, shift=True)
+    kmi = km.keymap_items.new("devtools.new_text_block", type = "N", value = "PRESS", ctrl = True, shift=True)
 
     addon_keymaps.append(km)
 
@@ -591,6 +608,7 @@ DEV_OT_openExternalEditor,
 DEV_OT_openScriptFolder,
 DEV_OT_updateDebugLinum,
 DEV_OT_writeClassesTuple,
+DEV_OT_new_text_block,
 DEV_PT_DevTools,
 Dev_tools_addon_pref,
 )
