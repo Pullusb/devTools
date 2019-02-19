@@ -24,9 +24,9 @@ Add text-editor shorctut:
 
 - Ctrl+Shift+I : add a quick import/classic module statement at cursor
 - Ctrl+P : add "print(*selection*)"
-- Ctrl+shift+P : trigger *print debug variable*
+- Ctrl+Shift+P : trigger *print debug variable*
 - Ctrl+L : Quote selection (with automatic quote or double quote choice)
-
+- Ctrl+Shift+N (2.8 specific) : Create a new text block (in 2.8 ctrl+N no longer used)
 
 ### Updates
 
@@ -34,6 +34,7 @@ Add text-editor shorctut:
   - version 2.8
   - added button write classes tuple (helper to create the register class)
   - added button to update linum in debug prints
+  - added shortcut ctrl+shift+N to create a new text block
 
 17/06/2018 - 1.0.7:
   - added button to open folder location in OS browser
