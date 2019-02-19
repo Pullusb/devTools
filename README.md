@@ -3,6 +3,7 @@ Blender addon - add developpement tools to blender texte editor
   
 **[Download latest](https://raw.githubusercontent.com/Pullusb/devTools/master/SB_devTools.py)** (right click, save Target as)
 
+**[Download old (2.7 version)](https://raw.githubusercontent.com/Pullusb/devTools/master/SB_devTools_279.py)** (right click, save Target as)
 ---
 
 ### Description
@@ -13,6 +14,7 @@ Add buttons to text-editor toolbar:
 - Disable all debug - Comment all lines terminating with "#Dbg" (like the print debug variable do)
 - Enable all debug
 - Expand text shortcuts - Replace _C._ with _bpy.context._ and _D._ with _bpy.data_
+- write classes tuple - Write a tuple at cursor containing all classes in file (for register/unregister in loop)
 - Text diff external - Print a diff with internal text and external source in console (appears only if file is external)
 - Open folder - Open folder where text is located in OS browser
 - Open externally - Open in external default editor or associated program
@@ -26,6 +28,11 @@ Add text-editor shorctut:
 
 
 ### Updates
+
+19/02/2019 - 1.0.8:
+  - version 2.8
+  - added button write classes tuple (helper to create the register class)
+  - added button to update linum in debug prints
 
 17/06/2018 - 1.0.7:
   - added button to open folder location in OS browser
