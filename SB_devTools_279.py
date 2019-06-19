@@ -2,8 +2,8 @@ bl_info = {
     "name": "dev tools",
     "description": "Add tool to help developpement",
     "author": "Samuel Bernou",
-    "version": (1, 0, 7),
-    "blender": (2, 78, 0),
+    "version": (1, 0, 8),
+    "blender": (2, 79, 0),
     "location": "Text editor > toolbar",
     "warning": "",
     "wiki_url": "",
@@ -228,7 +228,7 @@ class insert_import(bpy.types.Operator):
             text, override = get_text(context)#reget_override
         charPos = text.current_character
         #clip = copySelected()
-        import_text = "# coding: utf-8\nimport bpy\nimport os\nimport re, fnmatch, glob\nfrom mathutils import Vector\nC = bpy.context\nD = bpy.data\nscn = C.scene\n"
+        import_text = "# coding: utf-8\nimport bpy\nimport os\nfrom os import listdir\nfrom os.path import join, dirname, basename, exists, splitext\nimport re, fnmatch, glob\nfrom mathutils import Vector, Matrix\nfrom math import radians, degrees\nC = bpy.context\nD = bpy.data\nscene = C.scene\n"
 
         bpy.ops.text.insert(override, text=import_text)
         return {"FINISHED"}
@@ -440,6 +440,64 @@ class openScriptFolder_OP(bpy.types.Operator):
         self.report({'INFO'}, mess)
         return {"FINISHED"}
 
+class PrintResourcesPaths_OP(bpy.types.Operator):
+    bl_idname = "devtools.print_resources_path"
+    bl_label = "print ressources filepath"
+    bl_description = "Print usefull resources filepath in console"
+    bl_options = {"REGISTER"}
+
+    @classmethod
+    def poll(cls, context):
+        return context.area.type == 'TEXT_EDITOR'
+
+    def execute(self, context):
+        linesep = 10*'-'
+        print(linesep)
+        print('Ressources path'.upper())
+        print(linesep)
+        print('Local default installed addons (release):\n{}\n'.format(os.path.join(bpy.utils.resource_path('LOCAL') , 'scripts', 'addons')) )
+        print('Local user addon source (usually appdata roaming)\nWhere it goes when you do an "install from file":\n{}\n'.format(bpy.utils.user_resource('SCRIPTS', "addons")) )
+
+        user_preferences = bpy.context.user_preferences
+        external_script_dir = user_preferences.filepaths.script_directory
+        if external_script_dir and len(external_script_dir) > 2:
+            print('external scripts:\n{}\n'.format(external_script_dir) )
+
+        #config
+        print('config path:\n{}\n'.format(bpy.utils.user_resource('CONFIG')) )
+
+        print(linesep)
+        
+        mess = 'Look in console'
+        self.report({'INFO'}, mess)
+        return {"FINISHED"}
+
+
+class OpenFilepath_OP(bpy.types.Operator):
+    bl_idname = "devtools.open_filepath"
+    bl_label = "Open folder at given filepath"
+    bl_description = "Open given filepath in OS browser"
+    bl_options = {"REGISTER"}
+
+    @classmethod
+    def poll(cls, context):
+        return context.area.type == 'TEXT_EDITOR'
+
+    fp = bpy.props.StringProperty()
+    def execute(self, context):
+        filepath = self.fp
+        if not filepath:
+            print('Problem ! No filepath was receieved in operator')
+            return {"CANCELLED"}
+
+        if not os.path.exists(filepath):
+            print('filepath not found', filepath)
+            return {"CANCELLED"}
+
+        mess = openFolder(filepath)
+
+        self.report({'INFO'}, mess)
+        return {"FINISHED"}
 
 
 ###---PANEL
@@ -449,8 +507,10 @@ class DevTools(bpy.types.Panel):
     bl_space_type = "TEXT_EDITOR"
     bl_region_type = "UI"
     bl_label = "Dev Tools"
+    #bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
+
         layout = self.layout
         layout.prop(context.scene, 'line_in_debug_print')
         layout.operator(debugPrintVariable.bl_idname)
@@ -467,6 +527,36 @@ class DevTools(bpy.types.Panel):
             layout.operator(textDiff.bl_idname)
             layout.operator(openScriptFolder_OP.bl_idname)
             layout.operator(openExternalEditor_OP.bl_idname)
+
+
+        layout.label('open scripts places')
+        row = layout.row()
+        #local default installed addons (release)
+        row.operator(OpenFilepath_OP.bl_idname, text='built-in addons').fp = os.path.join(bpy.utils.resource_path('LOCAL') , 'scripts', 'addons')
+        
+        #Local user addon source (usually appdata roaming)\nWhere it goes when you do an 'install from file'
+        row.operator(OpenFilepath_OP.bl_idname, text='users addons').fp = bpy.utils.user_resource('SCRIPTS', "addons")
+        
+        layout = self.layout
+        #common script (if specified)
+        user_preferences = bpy.context.user_preferences
+        external_script_dir = user_preferences.filepaths.script_directory
+        if external_script_dir and len(external_script_dir) > 2:
+            layout.operator(OpenFilepath_OP.bl_idname, text='external scripts folder').fp = external_script_dir
+        layout.separator()
+        layout.operator(PrintResourcesPaths_OP.bl_idname)
+
+        '''
+        #test collapase open script part
+        box = layout.box()
+        row = box.row()
+        row.prop(stuff, "expanded",
+            icon="TRIA_DOWN" if obj.expanded else "TRIA_RIGHT",
+            icon_only=True, emboss=False
+        )
+        row.label(text="open scripts places")
+        '''
+
 
 ###---PREF PANEL
 
