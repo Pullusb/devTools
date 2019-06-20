@@ -2,11 +2,11 @@ bl_info = {
     "name": "dev tools",
     "description": "Add tool to help developpement",
     "author": "Samuel Bernou",
-    "version": (1, 0, 8),
+    "version": (1, 0, 9),
     "blender": (2, 79, 0),
     "location": "Text editor > toolbar",
     "warning": "",
-    "wiki_url": "",
+    "wiki_url": "https://github.com/Pullusb/devTools",
     "category": "Text Editor" }
 
 import bpy
@@ -36,14 +36,10 @@ def openFolder(folderpath):
     if not folderpath:
         return('//')
 
-    #cmd = cmd if cmd.endswith(' ') else cmd+' '
-    #folderpath = '"%s"' % folderpath
-    #fullcmd = '%s %s' % (cmd, folderpath)
-    #os.system(fullcmd)
     fullcmd = [cmd, folderpath]
     print(fullcmd)
     subprocess.Popen(fullcmd)
-    return ' '.join(fullcmd) #back to string to print
+    return ' '.join(fullcmd)#back to string to print
 
 
 def openFile(filepath):
@@ -66,15 +62,11 @@ def openFile(filepath):
         else:# OS X
             cmd = 'open'
 
-    #ensure trailing space
-    #filepath = '"%s"' % filepath
     mess = cmd + ' ' + filepath
     fullcmd = [cmd,filepath]
-    #launch open command
-    print(fullcmd)#Dbg
-    #os.system(fullcmd)
 
-    import subprocess
+    print(fullcmd)
+
     try:
         subprocess.Popen(fullcmd)
     except:
@@ -96,7 +88,7 @@ def copySelected():
 
 def print_string_variable(clip,linum=''):
     if linum:
-        line = 'print("l{1}:{0}", {0})#Dbg'.format(clip, str(linum) )
+        line = 'print(":l {1}:{0}", {0})#Dbg'.format(clip, str(linum) )
     else:
         line = 'print("{0}", {0})#Dbg'.format(clip)
     #'print("'+ clip + '", ' + clip + ')#Dbg'
