@@ -13,6 +13,7 @@ import bpy
 import os
 import re
 import difflib
+import subprocess
 from sys import platform
 
 ###---UTILITY funcs
@@ -31,16 +32,18 @@ def openFolder(folderpath):
             return('/')
     else:
         cmd = 'open'
- 
+
     if not folderpath:
         return('//')
- 
-    cmd = cmd if cmd.endswith(' ') else cmd+' '
-    folderpath = '"%s"' % folderpath
-    fullcmd = '%s %s' % (cmd, folderpath)
+
+    #cmd = cmd if cmd.endswith(' ') else cmd+' '
+    #folderpath = '"%s"' % folderpath
+    #fullcmd = '%s %s' % (cmd, folderpath)
+    #os.system(fullcmd)
+    fullcmd = [cmd, folderpath]
     print(fullcmd)
-    os.system(fullcmd)
-    return fullcmd
+    subprocess.Popen(fullcmd)
+    return ' '.join(fullcmd) #back to string to print
 
 
 def openFile(filepath):
@@ -467,7 +470,7 @@ class PrintResourcesPaths_OP(bpy.types.Operator):
         print('config path:\n{}\n'.format(bpy.utils.user_resource('CONFIG')) )
 
         print(linesep)
-        
+
         mess = 'Look in console'
         self.report({'INFO'}, mess)
         return {"FINISHED"}
@@ -533,10 +536,10 @@ class DevTools(bpy.types.Panel):
         row = layout.row()
         #local default installed addons (release)
         row.operator(OpenFilepath_OP.bl_idname, text='built-in addons').fp = os.path.join(bpy.utils.resource_path('LOCAL') , 'scripts', 'addons')
-        
+
         #Local user addon source (usually appdata roaming)\nWhere it goes when you do an 'install from file'
         row.operator(OpenFilepath_OP.bl_idname, text='users addons').fp = bpy.utils.user_resource('SCRIPTS', "addons")
-        
+
         layout = self.layout
         #common script (if specified)
         user_preferences = bpy.context.user_preferences
