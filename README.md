@@ -20,21 +20,32 @@ Add buttons to text-editor toolbar:
 - Open folder - Open folder where text is located in OS browser
 - Open externally - Open in external default editor or associated program
 
+- Open scripts buit-in - open addon location in the installation directory where addons shipped with blender are stored
+- Open scripts user - open local user addon source (Where it goes when you do an "install from file", e.g: in "Appdata roaming" for windows)
+- Open scripts external -  open external scripts location if any specified (in Prefs > File)
+- Print usefull resources path - Print in console all paths relative to addons location and config path
+
 Add text-editor shorctut:
 
 - Ctrl+Shift+I : add a quick import/classic module statement at cursor
 - Ctrl+P : add "print(*selection*)"
 - Ctrl+Shift+P : trigger *print debug variable*
 - Ctrl+L : Quote selection (with automatic quote or double quote choice)
-- Ctrl+Shift+N (2.8 specific) : Create a new text block (in 2.8 ctrl+N no longer used)
+
 
 ### Updates
+
+21/06/2019 - 1.0.9:
+  - added buttons to open easily all addons sources folder used by blender 
+  - open function now use subprocess instead of os.system (more robust on all platform and no risk to block UI)
+  - bug fixing for 2.8 version
+ 
 
 19/02/2019 - 1.0.8:
   - version 2.8
   - added button write classes tuple (helper to create the register class)
   - added button to update linum in debug prints
-  - added shortcut ctrl+shift+N to create a new text block
+  - added shortcut ctrl+shift+N to create a new text block - ! EDIT ! removed : Alt+N default shortcut does this
 
 17/06/2018 - 1.0.7:
   - added button to open folder location in OS browser
