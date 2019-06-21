@@ -585,7 +585,7 @@ class DEV_PT_devTools(bpy.types.Panel):
             layout.operator(DEV_OT_openScriptFolder.bl_idname)
             layout.operator(DEV_OT_openExternalEditor.bl_idname)
 
-        layout.label('open scripts places')
+        layout.label(text='open scripts places')
         row = layout.row()
         #local default installed addons (release)
         row.operator(DEV_OT_openFilepath.bl_idname, text='built-in addons').fp = os.path.join(bpy.utils.resource_path('LOCAL') , 'scripts', 'addons')
