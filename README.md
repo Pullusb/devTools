@@ -20,10 +20,12 @@ Add buttons to text-editor toolbar:
 - Open folder - Open folder where text is located in OS browser
 - Open externally - Open in external default editor or associated program
 
+Opening addons place on disk:
 - Open scripts buit-in - open addon location in the installation directory where addons shipped with blender are stored
 - Open scripts user - open local user addon source (Where it goes when you do an "install from file", e.g: in "Appdata roaming" for windows)
 - Open scripts external -  open external scripts location if any specified (in Prefs > File)
 
+Inserting / Printing stuff:
 - Print usefull resources path - Print in console all paths relative to addons location and config path
 - Insert date - Insert current date at cursor position. re-clic add hour. re-re-clic add abreviated day
 - Release infos - Insert blender release info (Date, Hash, branch), Usefull for bug report (print full build info in console)
