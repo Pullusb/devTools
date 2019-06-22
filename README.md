@@ -23,7 +23,10 @@ Add buttons to text-editor toolbar:
 - Open scripts buit-in - open addon location in the installation directory where addons shipped with blender are stored
 - Open scripts user - open local user addon source (Where it goes when you do an "install from file", e.g: in "Appdata roaming" for windows)
 - Open scripts external -  open external scripts location if any specified (in Prefs > File)
+
 - Print usefull resources path - Print in console all paths relative to addons location and config path
+- Insert date - Insert current date at cursor position. re-clic add hour. re-re-clic add abreviated day
+- Release infos - Insert blender release info (Date, Hash, branch), Usefull for bug report (print full build info in console)
 
 Add text-editor shorctut:
 
@@ -34,6 +37,9 @@ Add text-editor shorctut:
 
 
 ### Updates
+
+22/06/2019 - 1.1.0:
+  - added insert date and insert build infos
 
 21/06/2019 - 1.0.9:
   - added buttons to open easily all addons sources folder used by blender 
