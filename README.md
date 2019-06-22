@@ -9,8 +9,9 @@ Blender addon - add developpement tools to blender texte editor
 
 ### Description
 
-Add buttons to text-editor toolbar:
+#### Add buttons to text-editor toolbar:
 
+Helpers for your current script:
 - Print debug variable - Add a line in text to print selected variable on next execution
 - Disable all debug - Comment all lines terminating with "#Dbg" (like the print debug variable do)
 - Enable all debug
@@ -25,18 +26,19 @@ Opening addons place on disk:
 - Open scripts user - open local user addon source (Where it goes when you do an "install from file", e.g: in "Appdata roaming" for windows)
 - Open scripts external -  open external scripts location if any specified (in Prefs > File)
 
-Inserting / Printing stuff:
+Inserting / Printing info about blender:
 - Print usefull resources path - Print in console all paths relative to addons location and config path
 - Insert date - Insert current date at cursor position. re-clic add hour. re-re-clic add abreviated day
 - Release infos - Insert blender release info (Date, Hash, branch), Usefull for bug report (print full build info in console)
 
-Add text-editor shorctut:
+#### Add text-editor shorctut:
 
 - Ctrl+Shift+I : add a quick import/classic module statement at cursor
 - Ctrl+P : add "print(*selection*)"
 - Ctrl+Shift+P : trigger *print debug variable*
 - Ctrl+L : Quote selection (with automatic quote or double quote choice)
 
+---
 
 ### Updates
 
