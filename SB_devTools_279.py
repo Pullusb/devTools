@@ -2,7 +2,7 @@ bl_info = {
     "name": "dev tools",
     "description": "Add tool to help developpement",
     "author": "Samuel Bernou",
-    "version": (1, 0, 9),
+    "version": (1, 1, 0),
     "blender": (2, 79, 0),
     "location": "Text editor > toolbar",
     "warning": "",
@@ -223,7 +223,7 @@ class insert_import(bpy.types.Operator):
             text, override = get_text(context)#reget_override
         charPos = text.current_character
         #clip = copySelected()
-        import_text = "# coding: utf-8\nimport bpy\nimport os\nfrom os import listdir\nfrom os.path import join, dirname, basename, exists, splitext\nimport re, fnmatch, glob\nfrom mathutils import Vector, Matrix\nfrom math import radians, degrees\nC = bpy.context\nD = bpy.data\nscene = C.scene\n"
+        import_text = "# coding: utf-8\nimport bpy\nimport os\nfrom os import listdir\nfrom os.path import join, dirname, basename, exists, isfile, isdir, splitext\nimport re, fnmatch, glob\nfrom mathutils import Vector, Matrix\nfrom math import radians, degrees\nC = bpy.context\nD = bpy.data\nscene = C.scene\n"
 
         bpy.ops.text.insert(override, text=import_text)
         return {"FINISHED"}

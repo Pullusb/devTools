@@ -2,7 +2,7 @@ bl_info = {
     "name": "dev tools",
     "description": "Add tool to help developpement",
     "author": "Samuel Bernou",
-    "version": (1, 0, 9),
+    "version": (1, 1, 0),
     "blender": (2, 80, 0),
     "location": "Text editor > toolbar",
     "warning": "",
@@ -223,7 +223,7 @@ class DEV_OT_insert_import(bpy.types.Operator):
             text, override = get_text(context)#reget_override
         charPos = text.current_character
         #clip = copySelected()
-        import_text = "# coding: utf-8\nimport bpy\nimport os\nimport re, fnmatch, glob\nfrom mathutils import Vector\nC = bpy.context\nD = bpy.data\nscn = C.scene\n"
+        import_text = "# coding: utf-8\nimport bpy\nimport os\nfrom os import listdir\nfrom os.path import join, dirname, basename, exists, isfile, isdir, splitext\nimport re, fnmatch, glob\nfrom mathutils import Vector, Matrix\nfrom math import radians, degrees\nC = bpy.context\nD = bpy.data\nscene = C.scene\n"
 
         bpy.ops.text.insert(override, text=import_text)
         return {"FINISHED"}
@@ -518,6 +518,8 @@ class DEV_OT_printResourcesPaths(bpy.types.Operator):
 
         #config
         print('config path:\n{}\n'.format(bpy.utils.user_resource('CONFIG')) )
+        #binary path
+        print('binary path:\n{}\n'.format(bpy.app.binary_path) )
 
         print(linesep)
 
@@ -553,6 +555,85 @@ class DEV_OT_openFilepath(bpy.types.Operator):
         self.report({'INFO'}, mess)
         return {"FINISHED"}
 
+class DEV_OT_insertDate(bpy.types.Operator):
+    bl_idname = "devtools.insert_date"
+    bl_label = "Insert date string"
+    bl_description = "Insert date at current position (reclick to add details)"
+    bl_options = {"REGISTER"}
+
+    @classmethod
+    def poll(cls, context):
+        return context.area.type == 'TEXT_EDITOR'
+
+    def execute(self, context):
+        text, override = get_text(context)
+        #create new text-block if not any
+        if text == None:
+            text = bpy.data.texts.new('Text')
+            context.space_data.text = text
+            text, override = get_text(context)#reget_override
+
+        from time import strftime
+        content = strftime('%Y/%m/%d')
+        #if current_line
+        print( strftime('---date---\n%c\n%A %B') )
+        if re.search(r'\d{4}/\d{2}/\d{2}.*\d{2}:\d{2}:\d{2}.*[A-Z]{1}[a-z]{2}', text.current_line.body):#full
+            self.report({'ERROR'}, 'detected as full date')#or just pass...
+            return {"CANCELLED"}
+        elif re.search(r'\d{4}/\d{2}/\d{2}.*\d{2}:\d{2}:\d{2}', text.current_line.body):
+            content = strftime(' %a')#abreviated month
+        elif re.search(r'\d{4}/\d{2}/\d{2}', text.current_line.body):
+            content = strftime(' %H:%M:%S')#add hours
+        else:
+            content = strftime('%Y/%m/%d')#date
+
+        ## print detailed version -> %c: full detailed, %A %B full month and day
+        bpy.ops.text.insert(override, text=content)
+        return {"FINISHED"}
+
+class DEV_OT_blenderInfo(bpy.types.Operator):
+    bl_idname = "devtools.blender_info"
+    bl_label = "Blender infos"
+    bl_description = "Insert blender release info (Date, Hash, branch).\nUsefull for bug report"
+    bl_options = {"REGISTER"}
+
+    @classmethod
+    def poll(cls, context):
+        return context.area.type == 'TEXT_EDITOR'
+
+    def strip_b_str(self, s):
+        if str(s).startswith("b'"):
+            return str(s)[2:-1]
+        else:
+            return s
+
+    def execute(self, context):
+        text, override = get_text(context)
+        if text == None:
+            text = bpy.data.texts.new('Text')
+            context.space_data.text = text
+            text, override = get_text(context)
+
+        build_text = "Date : {}\nHash : {}\nBranch : {}\nVersion: {}".format(\
+        self.strip_b_str(bpy.app.build_date), self.strip_b_str(bpy.app.build_hash), self.strip_b_str(bpy.app.build_branch), bpy.app.version_string)
+
+        bpy.ops.text.insert(override, text=build_text)
+
+        #print in console
+        print('\n---Full build infos---')
+        for attr in dir(eval("bpy.app")):
+            if attr.startswith('build'):
+                print(attr)
+                try:
+                    value = str(getattr(eval("bpy.app"),attr))
+                    print(self.strip_b_str(value) )
+                    print()
+                except AttributeError:
+                    print('! ERROR !\n')
+
+        print('--------\nMinimal infos:\n'+build_text+'\n------\n')
+        self.report({'INFO'}, 'Full info Printed in console')
+        return {"FINISHED"}
 
 ###---PANEL
 
@@ -599,8 +680,15 @@ class DEV_PT_devTools(bpy.types.Panel):
         external_script_dir = preferences.filepaths.script_directory
         if external_script_dir and len(external_script_dir) > 2:
             layout.operator(DEV_OT_openFilepath.bl_idname, text='external scripts folder').fp = external_script_dir
+
         layout.separator()
+        #path printer
         layout.operator(DEV_OT_printResourcesPaths.bl_idname)
+
+        #infos printer
+        row = layout.row()
+        row.operator(DEV_OT_insertDate.bl_idname, text='Insert date')
+        row.operator(DEV_OT_blenderInfo.bl_idname, text='Release infos')
 
 ###---PREF PANEL
 
@@ -658,6 +746,8 @@ DEV_OT_updateDebugLinum,
 DEV_OT_writeClassesTuple,
 DEV_OT_printResourcesPaths,
 DEV_OT_openFilepath,
+DEV_OT_insertDate,
+DEV_OT_blenderInfo,
 DEV_PT_devTools,
 DEV_PT_tools_addon_pref,
 )
