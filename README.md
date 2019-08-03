@@ -28,7 +28,7 @@ Opening addons places on disk:
 
 Inserting / printing infos about blender:
 - Print usefull resources path - Print in console all paths relative to addons location, config path and more
-- Insert date - Insert current date at cursor position. re-clic add hour. re-re-clic add abreviated day
+- Insert date - Insert current date at cursor position. re-clic add hour. re-re-clic add abbreviated day
 - Release infos - Insert blender release info (Date, Hash, branch), Usefull for bug report (print full build info in console)
 
 #### Add text-editor shorctut:
