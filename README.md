@@ -5,6 +5,8 @@ Blender addon - add developpement tools to blender texte editor
 
 **[Download old (2.7 version)](https://raw.githubusercontent.com/Pullusb/devTools/master/SB_devTools_279.py)** (right click, save Target as)
 
+### [Demo Youtube](https://youtu.be/Rs4y7DeHkp8)
+
 ---
 
 ### Description
