@@ -2,7 +2,7 @@ bl_info = {
     "name": "dev tools",
     "description": "Add tool to help developpement",
     "author": "Samuel Bernou",
-    "version": (1, 1, 0),
+    "version": (1, 1, 2),
     "blender": (2, 80, 0),
     "location": "Text editor > toolbar",
     "warning": "",
@@ -226,6 +226,11 @@ class DEV_OT_insert_import(bpy.types.Operator):
         import_text = "# coding: utf-8\nimport bpy\nimport os\nfrom os import listdir\nfrom os.path import join, dirname, basename, exists, isfile, isdir, splitext\nimport re, fnmatch, glob\nfrom mathutils import Vector, Matrix\nfrom math import radians, degrees\nC = bpy.context\nD = bpy.data\nscene = C.scene\n"
 
         bpy.ops.text.insert(override, text=import_text)
+
+        ### Toggling coding space data basic feature #TODO (add box in pref to choose basic behavior)
+        context.space_data.show_line_numbers = True
+        context.space_data.show_syntax_highlight = True
+        #context.space_data.show_line_highlight = True
         return {"FINISHED"}
 
 
@@ -327,6 +332,75 @@ class DEV_OT_enableAllDebugPrint(bpy.types.Operator):
         else:
             mess = 'No line uncommented'
         self.report({'INFO'}, mess)
+        return {"FINISHED"}
+
+
+class DEV_OT_timeSelection(bpy.types.Operator):
+    bl_idname = "devtools.time_selection"
+    bl_label = "Time selected code"
+    bl_description = "add time prints around selection\n add import if necessary" 
+    bl_options = {"REGISTER"}
+
+    @classmethod
+    def poll(cls, context):
+        return context.area.type == 'TEXT_EDITOR'
+
+    def execute(self, context):
+        #get current text object
+        text, override = get_text(context)
+
+        ### -/ add time import (if needed)
+
+        #re_time_method = re.compile(r'from time import time')
+        need_import = True
+        for l in text.lines:
+            if l.body.startswith('from time import time'): #re_time_method.match(l.body):
+                need_import = False
+                continue
+
+        line_num=None
+        if need_import:
+            special_import = 'from time import time#Dbg-time'
+            has_import = False
+            for i, l in enumerate(text.lines):
+                if l.body.startswith(('import ', 'from ')):
+                    has_import = True
+                else:
+                    if has_import:
+                        line_num = i
+                        break
+
+            if not has_import:
+                line_num = 0
+            
+            #INSERT line with special_import at line_num
+            text.lines[line_num].body = special_import + '\n' + text.lines[line_num].body
+        #time import end /-
+
+        charPos = text.current_character
+        #get line index of selection (always in right order) only one element if not multiline
+        select_range = [i for i, l in enumerate(text.lines) if l == text.current_line or l == text.select_end_line]
+        
+        start_timer = r'start = time()#Dbg-time'
+        end_timer = 'print("{}-{} exec time:", time() - start)#Dbg-time'.format(select_range[0], select_range[-1]+1)
+
+        start_line = text.lines[select_range[0]]
+        end_line = text.lines[select_range[-1]+1]#get line after to insert #OUT OF RANGE IF LAST LINE !
+
+        heading_spaces = re.search('^(\s*).*', start_line.body).group(1)
+        
+        new = Fixindentation(start_timer, len(heading_spaces))
+        start_line.body = new + '\n' + start_line.body
+        
+        new = Fixindentation(end_timer, len(heading_spaces))
+        end_line.body = new + '\n' + end_line.body
+
+        #got to end of line,
+        #text.current_character = len(text.lines[text.current_line_index].body)
+        #bpy.ops.text.move(override, type='LINE_END')
+
+        #Put a return and paste with indentation
+        #bpy.ops.text.insert(override, text= '\n'+new)
         return {"FINISHED"}
 
 
@@ -600,10 +674,12 @@ class DEV_OT_blenderInfo(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         return context.area.type == 'TEXT_EDITOR'
-
+    
     def strip_b_str(self, s):
         if str(s).startswith("b'"):
-            return str(s)[2:-1]
+            #is a byte string
+            return s.decode()# decode to classic utf8
+            #return str(s)[2:-1]# rural method
         else:
             return s
 
@@ -655,6 +731,7 @@ class DEV_PT_devTools(bpy.types.Panel):
         layout.operator(DEV_OT_enableAllDebugPrint.bl_idname)
         layout.separator()
 
+        layout.operator(DEV_OT_timeSelection.bl_idname)
         layout.operator(DEV_OT_writeClassesTuple.bl_idname)
         layout.operator(DEV_OT_expandShortcutName.bl_idname)
 
@@ -745,6 +822,7 @@ DEV_OT_openScriptFolder,
 DEV_OT_updateDebugLinum,
 DEV_OT_writeClassesTuple,
 DEV_OT_printResourcesPaths,
+DEV_OT_timeSelection,
 DEV_OT_openFilepath,
 DEV_OT_insertDate,
 DEV_OT_blenderInfo,
