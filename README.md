@@ -1,9 +1,10 @@
 # devTools
-Blender addon - add developpement tools to blender texte editor
+Blender addon - add developpement tools to blender text editor
   
-**[Download latest](https://raw.githubusercontent.com/Pullusb/devTools/master/SB_devTools.py)** (right click, save Target as)
+**[Download latest](https://github.com/Pullusb/devTools/archive/master.zip)** (left clic)
+<!-- **[Download latest](https://raw.githubusercontent.com/Pullusb/devTools/master/SB_devTools.py)** (right click, save Target as) -->
 
-**[Download old (2.7 version)](https://raw.githubusercontent.com/Pullusb/devTools/master/SB_devTools_279.py)** (right click, save Target as)
+**[Download old (2.7 version)](https://raw.githubusercontent.com/Pullusb/devTools/master/SB_devTools_279.py)** (right click, save Target as. single file)
 
 ### [Demo Youtube](https://youtu.be/Rs4y7DeHkp8)
 
@@ -44,44 +45,49 @@ Inserting / printing infos about blender:
 
 ### Updates
 
-22/06/2019 - 1.1.0:
+1.2.0 - 2020-07-01:
+  - fix: time selected now works
+  - feat: new console head button to clic in any area to quickly write access to it in current console
+  - code: renamed to `__init__` do pass in folder addon mode (for 2.8 version)
+
+1.1.0 - 22-06-2019:
   - added insert date and insert build infos
 
-21/06/2019 - 1.0.9:
+1.0.9 - 21-06-2019:
   - added buttons to open easily all addons sources folder used by blender 
   - open function now use subprocess instead of os.system (more robust on all platform and no risk to block UI)
   - bug fixing for 2.8 version
  
 
-19/02/2019 - 1.0.8:
+1.0.8 - 19-02-2019:
   - version 2.8
   - added button write classes tuple (helper to create the register class)
   - added button to update linum in debug prints
   - added shortcut ctrl+shift+N to create a new text block - ! EDIT ! removed : Alt+N default shortcut does this
 
-17/06/2018 - 1.0.7:
+1.0.7 - 17-06-2018:
   - added button to open folder location in OS browser
   - Bugfix, open in external exditor now work in windows
 
-19/12/2017 - 1.0.6 :  
+1.0.6 - 19-12-2017 :  
   - Fix problem when file seems unsync to blender but there is no difference (print 'no diff detected')
   
-01/12/2017:  
+01-12-2017:  
   - Ctrl+Shift+I create the text block if not any (it does the "ctrl+n" for you ;) )
 
-06/10/2017:
+06-10-2017:
   - add button to open in external default editor
 
-31/08/2017
+31-08-2017:
   - add button to print difference between internal and external code in console
 
-20/06/2017:
+20-06-2017:
   - add text-editor shorctut: Ctrl+Shift+I : write a quick import/classic module statement
 
-13/06/2017:
+13-06-2017:
   - add C and D text shortcut expansion
 
-26/04/2017:
+26-04-2017:
   - add text-editor shorctut:
 
     - Ctrl+P : add "print(*selection*)"
