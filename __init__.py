@@ -2,7 +2,7 @@ bl_info = {
     "name": "dev tools",
     "description": "Add tool to help developpement",
     "author": "Samuel Bernou",
-    "version": (1, 2, 0),
+    "version": (1, 3, 0),
     "blender": (2, 80, 0),
     "location": "Text editor > toolbar",
     "warning": "",
@@ -287,7 +287,7 @@ class DEV_OT_disableAllDebugPrint(bpy.types.Operator):
         return context.area.type == 'TEXT_EDITOR'
 
     def execute(self, context):
-        text, override = get_text(context)
+        text, _override = get_text(context)
         count = 0
         for i, lineOb in enumerate(text.lines):
             if lineOb.body.endswith('#Dbg'):#detect debug lines
@@ -317,7 +317,7 @@ class DEV_OT_enableAllDebugPrint(bpy.types.Operator):
         return context.area.type == 'TEXT_EDITOR'
 
     def execute(self, context):
-        text, override = get_text(context)
+        text, _override = get_text(context)
         count = 0
         for i, lineOb in enumerate(text.lines):
             if lineOb.body.endswith('#Dbg'):#detect debug lines
@@ -347,7 +347,7 @@ class DEV_OT_timeSelection(bpy.types.Operator):
 
     def execute(self, context):
         #get current text object
-        text, override = get_text(context)
+        text, _override = get_text(context)
 
         ### -/ add time import (if needed)
 
@@ -452,7 +452,7 @@ class DEV_OT_updateDebugLinum(bpy.types.Operator):
         return context.area.type == 'TEXT_EDITOR'
 
     def execute(self, context):
-        text, override = get_text(context)
+        text, _override = get_text(context)
         relinum = re.compile(r'(print\(\":l) \d+(:)')
         renum = re.compile(r'print\(\":l (\d+):')
         #match element: .*print:l 12:.*
@@ -486,7 +486,7 @@ class DEV_OT_writeClassesTuple(bpy.types.Operator):
         return context.area.type == 'TEXT_EDITOR'
 
     def execute(self, context):
-        text, override = get_text(context)
+        text, _override = get_text(context)
 
         block = 'classes = (\n'
         for line in text.lines:
@@ -554,7 +554,7 @@ class DEV_OT_openExternalEditor(bpy.types.Operator):
         return context.area.type == 'TEXT_EDITOR'
 
     def execute(self, context):
-        text, override = get_text(context)
+        text, _override = get_text(context)
         if text.filepath:#not necessary, button masked if no external data
             mess = openFile(text.filepath)
         else:
@@ -727,6 +727,49 @@ class DEV_OT_blenderInfo(bpy.types.Operator):
         self.report({'INFO'}, 'Full info Printed in console')
         return {"FINISHED"}
 
+class DEV_OT_key_printer(bpy.types.Operator):
+    bl_idname = "devtools.keypress_tester"
+    bl_label = "key event tester"
+    bl_description = "Any key event name will be printed in console (press ESC to stop modal)"
+    bl_options = {"REGISTER", "UNDO"}
+
+    def modal(self, context, event):
+
+        ### /TESTER - keycode printer (flood console but usefull to know a keycode name)
+        if event.type not in {'MOUSEMOVE', 'INBETWEEN_MOUSEMOVE', 'TIMER_REPORT'}:# , 'LEFTMOUSE'# avoid flood of mouse move.
+            print('key:', event.type, 'value:', event.value)
+            if event.value == 'PRESS': 
+                self.report({'INFO'}, event.type)
+        ###  TESTER/
+
+        ### /AREA INFOS
+        if event.type == 'LEFTMOUSE':
+            if event.value == 'PRESS':
+                print('-=-')
+                screen = context.window.screen       
+                for i,a in enumerate(screen.areas):
+                    if (a.x < event.mouse_x < a.x + a.width
+                    and a.y < event.mouse_y < a.y + a.height):
+                        print("Clicked in %s area of screen %s" % (a.type, screen.name))
+                        print(f'Area size {a.width}x{a.height} (corner {a.x},{a.y})')
+                        print(f'mouse click {event.mouse_x}x{event.mouse_y}')
+                print('-=-')
+        ### AREA INFOS/
+
+        # QUIT
+        if event.type in {'ESC'}:#'RIGHTMOUSE',            
+            print('--- STOPPED ---')#Dbg
+            return {'CANCELLED'}
+
+        return {'RUNNING_MODAL'}
+
+    def invoke(self, context, event):
+        ## Starts the modal
+        print('\n--- KEYCODE PRINT STARTED -- press ESC to stop---')#Dbg
+        self.report({'INFO'}, 'keycode print started (ESC to stop), see console for details')
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
 class DEV_OT_console_context_area_access(bpy.types.Operator):
     bl_idname = "devtools.console_context_area_access"
     bl_label = "Access clicked area"
@@ -769,7 +812,7 @@ class DEV_OT_console_context_area_access(bpy.types.Operator):
     def invoke(self, context, event):
         self.console_override = None
         if context.area.type == 'CONSOLE':
-            self.console_override = override = {'screen':context.window.screen, 'area': context.area}
+            self.console_override = {'screen':context.window.screen, 'area': context.area}
         context.window_manager.modal_handler_add(self)
         return {'RUNNING_MODAL'}
 
@@ -798,7 +841,7 @@ class DEV_PT_devTools(bpy.types.Panel):
         layout.operator(DEV_OT_expandShortcutName.bl_idname)
 
         #When text is saved externally draw more option
-        text,override = get_text(context)
+        text, override = get_text(context)
         if text and text.filepath :#mask button if file is pure internal
             layout.separator()
             layout.operator(DEV_OT_textDiff.bl_idname)
@@ -828,6 +871,8 @@ class DEV_PT_devTools(bpy.types.Panel):
         row = layout.row()
         row.operator(DEV_OT_insertDate.bl_idname, text='Insert date')
         row.operator(DEV_OT_blenderInfo.bl_idname, text='Release infos')
+        layout.separator()
+        layout.operator('devtools.keypress_tester',)
 
 
 ###---FUNC PANEL
@@ -896,6 +941,7 @@ DEV_OT_timeSelection,
 DEV_OT_openFilepath,
 DEV_OT_insertDate,
 DEV_OT_blenderInfo,
+DEV_OT_key_printer,
 DEV_OT_console_context_area_access,
 DEV_PT_devTools,
 DEV_PT_tools_addon_pref,

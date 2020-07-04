@@ -18,6 +18,7 @@ Helpers for your current script:
 - Print debug variable - Add a line in text to print selected variable on next execution
 - Disable all debug - Comment all lines terminating with "#Dbg" (like the print debug variable do)
 - Enable all debug
+- Time selected lines (add two timer lines to print execution code in sec of selected line (add import if necessary))
 - Expand text shortcuts - Replace _C._ with _bpy.context._ and _D._ with _bpy.data_
 - write classes tuple - Write a tuple at cursor containing all classes in file (for register/unregister in loop)
 - Text diff external - Print a diff with internal text and external source in console (appears only if file is external)
@@ -34,6 +35,13 @@ Inserting / printing infos about blender:
 - Insert date - Insert current date at cursor position. re-clic add hour. re-re-clic add abbreviated day
 - Release infos - Insert blender release info (Date, Hash, branch), Usefull for bug report (print full build info in console)
 
+- Event Keycode printer - Modal to capture event and print event.type and event.value. serve as quick way to know keycode to use for keymap or modals
+
+#### Add button to interactive console header
+
+- Access clicked Area - click in any area to write in console the path to it (in current layout). e.g: `bpy.context.screen.areas[5]`
+
+
 #### Add text-editor shorctut:
 
 - Ctrl+Shift+I : add a quick import/classic module statement at cursor
@@ -44,6 +52,11 @@ Inserting / printing infos about blender:
 ---
 
 ### Updates
+
+1.3.0 - 2020-07-04:
+
+- New keycode printer operator
+- update readme
 
 1.2.0 - 2020-07-01:
   - fix: time selected now works
