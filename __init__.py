@@ -135,6 +135,10 @@ def get_text(context):
                 'edit_text' : text
                 }
     return(text, override)
+    
+def update_enum_DebugPrint(self, context):
+
+    eval('bpy.ops.%s()' % self.enum_DebugPrint)
 
 
 ###---TASKS
@@ -273,7 +277,26 @@ class DEV_OT_debugPrintVariable(bpy.types.Operator):
         #put a return and paste with indentation
         bpy.ops.text.insert(override, text= '\n'+new)
         return {"FINISHED"}
+        
 
+class DEV_OT_deleteAllDebugPrint(bpy.types.Operator):
+    bl_idname = "devtools.delete_all_debug_print"
+    bl_label = "Delete all debug print"
+    bl_description = "Delete all debug print"
+    bl_options = {"REGISTER"}
+    
+    @classmethod
+    def poll(cls, context):
+        return context.area.type == 'TEXT_EDITOR' #not really necessary the menu is there...
+        
+    def execute(self, context):
+        text, _override = get_text(context)
+        count = 0
+        for i, lineOb in enumerate(text.lines):
+            if lineOb.body.endswith('#Dbg'):#detect debug lines
+                lineOb.body = ""
+
+        return {"FINISHED"}
 
 
 class DEV_OT_disableAllDebugPrint(bpy.types.Operator):
@@ -303,7 +326,6 @@ class DEV_OT_disableAllDebugPrint(bpy.types.Operator):
             mess = 'No line commented'
         self.report({'INFO'}, mess)
         return {"FINISHED"}
-
 
 
 class DEV_OT_enableAllDebugPrint(bpy.types.Operator):
@@ -831,9 +853,8 @@ class DEV_PT_devTools(bpy.types.Panel):
         row.prop(context.scene, 'line_in_debug_print')
         row.operator(DEV_OT_updateDebugLinum.bl_idname, text='', icon='FILE_REFRESH')#Update
         layout.operator(DEV_OT_debugPrintVariable.bl_idname)
-        layout.separator()
-        layout.operator(DEV_OT_disableAllDebugPrint.bl_idname)
-        layout.operator(DEV_OT_enableAllDebugPrint.bl_idname)
+        layout.label(text="Options")
+        layout.prop(context.scene, 'enum_DebugPrint', text='', expand=False)
         layout.separator()
 
         layout.operator(DEV_OT_timeSelection.bl_idname)
@@ -930,6 +951,7 @@ DEV_OT_insert_import,
 DEV_OT_debugPrintVariable,
 DEV_OT_disableAllDebugPrint,
 DEV_OT_enableAllDebugPrint,
+DEV_OT_deleteAllDebugPrint,
 DEV_OT_expandShortcutName,
 DEV_OT_textDiff,
 DEV_OT_openExternalEditor,
@@ -952,14 +974,37 @@ def register():
     if not bpy.app.background:
         for cls in classes:
             bpy.utils.register_class(cls)
-
+            
         register_keymaps()
+            
+    bpy.types.Scene.enum_DebugPrint = bpy.props.EnumProperty(
+            name = "enum_DebugPrint",
+            description = "options",
+            items = [
+                ("devtools.enable_all_debug_print", 
+                "Enable all debug print", 
+                "uncomment all lines finishing wih '#Dbg'"),
+                
+                ("devtools.disable_all_debug_print", 
+                "Disable all debug print", 
+                "comment all lines finishing with '#Dbg'"),
+                
+                ("devtools.delete_all_debug_print", 
+                "Delete all debug print", 
+                "Delete all debug prints"), 
+            ],
+            update=update_enum_DebugPrint
+        )
+
+    
     bpy.types.CONSOLE_HT_header.append(devtool_console)
     # in menu -> CONSOLE_MT_editor_menus
 
 def unregister():
     
     bpy.types.CONSOLE_HT_header.remove(devtool_console)
+    del bpy.types.Scene.enum_DebugPrint
+    
     if not bpy.app.background:
         unregister_keymaps()
 
