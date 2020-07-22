@@ -2,11 +2,11 @@ bl_info = {
     "name": "dev tools",
     "description": "Add tool to help developpement",
     "author": "Samuel Bernou",
-    "version": (1, 3, 0),
-    "blender": (2, 80, 0),
+    "version": (1, 4, 0),
+    "blender": (2, 83, 0),
     "location": "Text editor > toolbar",
     "warning": "",
-    "wiki_url": "https://github.com/Pullusb/devTools",
+    "doc_url": "https://github.com/Pullusb/devTools",
     "category": "Text Editor" }
 
 import bpy
@@ -15,6 +15,8 @@ import re
 import difflib
 import subprocess
 from sys import platform
+from time import strftime
+from pathlib import Path
 
 ###---UTILITY funcs
 
@@ -655,11 +657,11 @@ class DEV_OT_openFilepath(bpy.types.Operator):
     def execute(self, context):
         filepath = self.fp
         if not filepath:
-            print('Problem ! No filepath was receieved in operator')
+            print('Problem ! No filepath was received in operator')
             return {"CANCELLED"}
 
         if not os.path.exists(filepath):
-            print('filepath not found', filepath)
+            print('Filepath not found', filepath)
             return {"CANCELLED"}
 
         mess = openFolder(filepath)
@@ -685,7 +687,6 @@ class DEV_OT_insertDate(bpy.types.Operator):
             context.space_data.text = text
             text, override = get_text(context)#reget_override
 
-        from time import strftime
         content = strftime('%Y/%m/%d')
         #if current_line
         print( strftime('---date---\n%c\n%A %B') )
@@ -838,6 +839,41 @@ class DEV_OT_console_context_area_access(bpy.types.Operator):
         context.window_manager.modal_handler_add(self)
         return {'RUNNING_MODAL'}
 
+
+class DEV_OT_backupPref(bpy.types.Operator):
+    bl_idname = "devtools.backup_prefs"
+    bl_label = "Backup user preferences"
+    bl_description = "Backup user preferences in a subfolder of user config (also backup startup file)\nOpen folder after backup"
+    bl_options = {"REGISTER"}
+
+    def execute(self, context):
+        config = Path(bpy.utils.user_resource('CONFIG'))
+        mypref = config / 'userpref.blend'
+        mystartup = config / 'startup.blend'
+
+        if not mypref.exists():
+            self.report({'ERROR'}, 'No pref found to backup')
+            return {"CANCELLED"}
+
+        backup_main_folder = config / 'userpref_backups'
+        
+        # timestamp on file : strftime('userpref_%Y-%m-%d_%H-%M-%S.blend')
+        timestamp = strftime('%Y-%m-%d_%H-%M-%S')
+        backup = backup_main_folder / timestamp
+        backup.mkdir(parents=True, exist_ok=True)
+
+        import shutil
+        shutil.copy(mypref, backup)
+
+        openFolder(str(backup))
+
+        if mystartup.exists():
+            shutil.copy(mystartup, backup)
+            
+        self.report({'INFO'}, f'Pref backup at {backup}')
+        return {"FINISHED"}
+
+
 ###---PANEL
 
 class DEV_PT_devTools(bpy.types.Panel):
@@ -872,17 +908,23 @@ class DEV_PT_devTools(bpy.types.Panel):
         layout.label(text='open scripts places')
         row = layout.row()
         #local default installed addons (release)
-        row.operator(DEV_OT_openFilepath.bl_idname, text='built-in addons').fp = os.path.join(bpy.utils.resource_path('LOCAL') , 'scripts', 'addons')
+        row.operator(DEV_OT_openFilepath.bl_idname, text='Built-in addons').fp = os.path.join(bpy.utils.resource_path('LOCAL') , 'scripts', 'addons')
 
         #Local user addon source (usually appdata roaming)\nWhere it goes when you do an 'install from file'
-        row.operator(DEV_OT_openFilepath.bl_idname, text='users addons').fp = bpy.utils.user_resource('SCRIPTS', "addons")
+        row.operator(DEV_OT_openFilepath.bl_idname, text='Users addons').fp = bpy.utils.user_resource('SCRIPTS', "addons")
 
         layout = self.layout
         #common script (if specified)
         preferences = bpy.context.preferences
         external_script_dir = preferences.filepaths.script_directory
         if external_script_dir and len(external_script_dir) > 2:
-            layout.operator(DEV_OT_openFilepath.bl_idname, text='external scripts folder').fp = external_script_dir
+            layout.operator(DEV_OT_openFilepath.bl_idname, text='External scripts folder').fp = external_script_dir
+
+        ## standard operator
+        #layout.operator("wm.path_open", text='Open config location').filepath = bpy.utils.user_resource('CONFIG')
+        layout.operator(DEV_OT_openFilepath.bl_idname, text='Config folder').fp = str(Path(bpy.utils.user_resource('CONFIG')))
+        
+        ##layout.operator(DEV_OT_backupPref.bl_idname, text='backup user prefs')# in addon prefs
 
         layout.separator()
         #path printer
@@ -916,6 +958,8 @@ class DEV_PT_tools_addon_pref(bpy.types.AddonPreferences):
     def draw(self, context):
         layout = self.layout
         layout.prop(self, "external_editor")
+        layout.separator()
+        layout.operator(DEV_OT_backupPref.bl_idname, text='Backup user prefs and startup files')
 
 
 ###---KEYMAP
@@ -966,6 +1010,7 @@ DEV_OT_blenderInfo,
 DEV_OT_key_printer,
 DEV_OT_console_context_area_access,
 DEV_PT_devTools,
+DEV_OT_backupPref,
 DEV_PT_tools_addon_pref,
 )
 

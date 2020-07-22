@@ -17,6 +17,7 @@ Blender addon - add developpement tools to blender text editor
 Helpers for your current script:
 - Print debug variable - Add a line in text to print selected variable on next execution
 - Disable all debug - Comment all lines terminating with "#Dbg" (like the print debug variable do)
+- Delete all debug print (replace by blank lines)
 - Enable all debug
 - Time selected lines (add two timer lines to print execution code in sec of selected line (add import if necessary))
 - Expand text shortcuts - Replace _C._ with _bpy.context._ and _D._ with _bpy.data_
@@ -28,7 +29,9 @@ Helpers for your current script:
 Opening addons places on disk:
 - Open scripts buit-in - open addon location in the installation directory where addons shipped with blender are stored
 - Open scripts user - open local user addon source (Where it goes when you do an "install from file", e.g: in "Appdata roaming" for windows)
-- Open scripts external -  open external scripts location if any specified (in Prefs > File)
+- Open scripts external - open external scripts location if any specified (in Prefs > File)
+- Open config folder - open local user config folder
+
 
 Inserting / printing infos about blender:
 - Print usefull resources path - Print in console all paths relative to addons location, config path and more
@@ -41,6 +44,10 @@ Inserting / printing infos about blender:
 
 - Access clicked Area - click in any area to write in console the path to it (in current layout). e.g: `bpy.context.screen.areas[5]`
 
+#### Add button to expanded addon preferences
+
+-
+
 
 #### Add text-editor shorctut:
 
@@ -52,6 +59,13 @@ Inserting / printing infos about blender:
 ---
 
 ### Updates
+
+1.4.0 - 2020-07-22:
+
+- code: Passing 'wiki_url' to 'doc_url' in bl_infos to comply with 2.83
+- new: operator erase debug prints with new UI enum integration (thanks to [1C0D](https://github.com/1C0D)) for his [pull request](https://github.com/Pullusb/devTools/pull/3))
+- new: operator to backup userpref and startup files in config folder
+- typos
 
 1.3.0 - 2020-07-04:
 
