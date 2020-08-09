@@ -918,7 +918,7 @@ class DEV_PT_devTools(bpy.types.Panel):
         preferences = bpy.context.preferences
         external_script_dir = preferences.filepaths.script_directory
         if external_script_dir and len(external_script_dir) > 2:
-            layout.operator(DEV_OT_openFilepath.bl_idname, text='External scripts folder').fp = external_script_dir
+            layout.operator(DEV_OT_openFilepath.bl_idname, text='External scripts folder').fp = os.path.dirname(external_script_dir)
 
         ## standard operator
         #layout.operator("wm.path_open", text='Open config location').filepath = bpy.utils.user_resource('CONFIG')
