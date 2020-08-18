@@ -151,9 +151,8 @@ class DEV_OT_simplePrint(bpy.types.Operator):
     bl_description = "Add a new line with debug print of selected text\n(replace clipboard)"
     bl_options = {"REGISTER"}
 
-    bpy.types.Scene.line_in_debug_print = bpy.props.BoolProperty(
-    name="include line num", description='include line number in print', default=False)
-
+    quote: bpy.props.BoolProperty()
+    
     @classmethod
     def poll(cls, context):
         return context.area.type == 'TEXT_EDITOR'
@@ -163,9 +162,13 @@ class DEV_OT_simplePrint(bpy.types.Operator):
         text, override = get_text(context)
 
         #create debug print from variable selection
-        charPos = text.current_character
+        # charPos = text.current_character
         clip = copySelected()
-        debugPrint = 'print({0})'.format(clip)#'print({0})#Dbg'
+        
+        if self.quote:
+            debugPrint = f'print("{clip}")' #'print({0})#Dbg'
+        else:
+            debugPrint = f'print({clip})' #'print({0})#Dbg'
 
         ###On a new line
         # heading_spaces = re.search('^(\s*).*', text.current_line.body).group(1)
@@ -177,14 +180,12 @@ class DEV_OT_simplePrint(bpy.types.Operator):
         bpy.ops.text.insert(override, text=debugPrint)
         return {"FINISHED"}
 
+
 class DEV_OT_quote(bpy.types.Operator):
     bl_idname = "devtools.quote"
     bl_label = "quote text"
     bl_description = "quote text"
     bl_options = {"REGISTER"}
-
-    bpy.types.Scene.line_in_debug_print = bpy.props.BoolProperty(
-    name="include line num", description='include line number in print', default=False)
 
     @classmethod
     def poll(cls, context):
@@ -192,7 +193,7 @@ class DEV_OT_quote(bpy.types.Operator):
 
     def execute(self, context):
         text, override = get_text(context)
-        charPos = text.current_character
+        # charPos = text.current_character
         clip = copySelected()
         if '"' in clip:
             debugPrint = "'{0}'".format(clip)#'print({0})#Dbg'
@@ -238,7 +239,6 @@ class DEV_OT_insert_import(bpy.types.Operator):
         context.space_data.show_syntax_highlight = True
         #context.space_data.show_line_highlight = True
         return {"FINISHED"}
-
 
 
 class DEV_OT_debugPrintVariable(bpy.types.Operator):
@@ -499,6 +499,7 @@ class DEV_OT_updateDebugLinum(bpy.types.Operator):
 
         return {"FINISHED"}
 
+
 class DEV_OT_writeClassesTuple(bpy.types.Operator):
     bl_idname = "devtools.write_classes_tuple"
     bl_label = "Write classes tuple"
@@ -520,6 +521,7 @@ class DEV_OT_writeClassesTuple(bpy.types.Operator):
         text.write(block)
 
         return {"FINISHED"}
+
 
 class DEV_OT_textDiff(bpy.types.Operator):
     bl_idname = "devtools.diff_internal_external"
@@ -567,6 +569,7 @@ class DEV_OT_textDiff(bpy.types.Operator):
         self.report({'INFO'}, mess)
         return {"FINISHED"}
 
+
 class DEV_OT_openExternalEditor(bpy.types.Operator):
     bl_idname = "devtools.open_in_default_editor"
     bl_label = "Open externally"
@@ -587,6 +590,7 @@ class DEV_OT_openExternalEditor(bpy.types.Operator):
         self.report({'INFO'}, mess)
         return {"FINISHED"}
 
+
 class DEV_OT_openScriptFolder(bpy.types.Operator):
     bl_idname = "devtools.open_script_folder"
     bl_label = "Open folder"
@@ -606,6 +610,7 @@ class DEV_OT_openScriptFolder(bpy.types.Operator):
 
         self.report({'INFO'}, mess)
         return {"FINISHED"}
+
 
 class DEV_OT_printResourcesPaths(bpy.types.Operator):
     bl_idname = "devtools.print_resources_path"
@@ -669,6 +674,7 @@ class DEV_OT_openFilepath(bpy.types.Operator):
         self.report({'INFO'}, mess)
         return {"FINISHED"}
 
+
 class DEV_OT_insertDate(bpy.types.Operator):
     bl_idname = "devtools.insert_date"
     bl_label = "Insert date string"
@@ -703,6 +709,7 @@ class DEV_OT_insertDate(bpy.types.Operator):
         ## print detailed version -> %c: full detailed, %A %B full month and day
         bpy.ops.text.insert(override, text=content)
         return {"FINISHED"}
+
 
 class DEV_OT_blenderInfo(bpy.types.Operator):
     bl_idname = "devtools.blender_info"
@@ -749,6 +756,7 @@ class DEV_OT_blenderInfo(bpy.types.Operator):
         print('--------\nMinimal infos:\n'+build_text+'\n------\n')
         self.report({'INFO'}, 'Full info Printed in console')
         return {"FINISHED"}
+
 
 class DEV_OT_key_printer(bpy.types.Operator):
     bl_idname = "devtools.keypress_tester"
@@ -947,16 +955,41 @@ def devtool_console(self, context):
 
 ###---PREF PANEL
 
+def update_devtool_console_toggle(self,context):
+    
+    preferences = context.preferences
+    addon_prefs = preferences.addons[__name__].preferences
+
+    if addon_prefs.devtool_console_toggle:
+        bpy.types.CONSOLE_HT_header.append(devtool_console)
+    else:
+        bpy.types.CONSOLE_HT_header.remove(devtool_console)
+        
+
 class DEV_PT_tools_addon_pref(bpy.types.AddonPreferences):
     bl_idname = __name__
 
-    external_editor : bpy.props.StringProperty(
+    external_editor: bpy.props.StringProperty(
             name="External Editor",
             subtype='FILE_PATH',
             )
 
+    devtool_console_toggle: bpy.props.BoolProperty(
+            name="Console: get clicked area",
+            default=True,
+            update=update_devtool_console_toggle
+            )
+            
     def draw(self, context):
         layout = self.layout
+        text = 'Ctrl+Shift+I: classic import modules insertion   |  Ctrl+P : print(selection) insertion'
+        text1 = 'Ctrl+Alt+P: print("selection") insertion   |  Ctrl+Shift+P: print debug variable insertion'
+        text2 = 'Ctrl+L : Quote selection (with automatic quote or double quote choice)'  
+        layout.label(text=text)
+        layout.label(text=text1)
+        layout.label(text=text2)
+        layout.prop(self, "devtool_console_toggle")
+        layout.label(text="") #separation line
         layout.prop(self, "external_editor")
         layout.separator()
         layout.operator(DEV_OT_backupPref.bl_idname, text='Backup user prefs and startup files')
@@ -971,6 +1004,9 @@ def register_keymaps():
     km = wm.keyconfigs.addon.keymaps.new(name = "Text", space_type = "TEXT_EDITOR")
 
     kmi = km.keymap_items.new("devtools.simple_print", type = "P", value = "PRESS", ctrl = True)
+    kmi.properties.quote = False
+    kmi = km.keymap_items.new("devtools.simple_print", type = "P", value = "PRESS", ctrl = True, alt = True)
+    kmi.properties.quote = True
     kmi = km.keymap_items.new("devtools.debug_print_variable", type = "P", value = "PRESS", ctrl = True, shift = True)
     kmi = km.keymap_items.new("devtools.quote", type = "L", value = "PRESS", ctrl = True)
     kmi = km.keymap_items.new("devtools.insert_import", type = "I", value = "PRESS", ctrl = True, shift=True)
@@ -1041,8 +1077,11 @@ def register():
             update=update_enum_DebugPrint
         )
 
-    
-    bpy.types.CONSOLE_HT_header.append(devtool_console)
+    preferences = bpy.context.preferences
+    addon_prefs = preferences.addons[__name__].preferences
+
+    if addon_prefs.devtool_console_toggle:
+        bpy.types.CONSOLE_HT_header.append(devtool_console)
     # in menu -> CONSOLE_MT_editor_menus
 
 def unregister():
