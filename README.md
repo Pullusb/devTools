@@ -22,6 +22,7 @@ Helpers for your current script:
 - Time selected lines (add two timer lines to print execution code in sec of selected line (add import if necessary))
 - Expand text shortcuts - Replace _C._ with _bpy.context._ and _D._ with _bpy.data_
 - write classes tuple - Write a tuple at cursor containing all classes in file (for register/unregister in loop)
+- Context override - Modal, click in any area after clicking the button to generate a context override function pointing to this area type  
 - Text diff external - Print a diff with internal text and external source in console (appears only if file is external)
 - Open folder - Open folder where text is located in OS browser
 - Open externally - Open in external default editor or associated program
@@ -44,9 +45,11 @@ Inserting / printing infos about blender:
 
 - Access clicked Area - click in any area to write in console the path to it (in current layout). e.g: `bpy.context.screen.areas[5]`
 
-#### Add button to expanded addon preferences
+- Context override - click in any area to write context override variable line (in current layout)
 
--
+<!-- #### Add button to expanded addon preferences
+
+- -->
 
 
 #### Add text-editor shorctut:
@@ -61,6 +64,9 @@ Inserting / printing infos about blender:
 
 ### Updates
 
+1.6.0 - 2020-09-03:
+
+- feat: Create some context override code  
 
 1.5.0 - 2020-09-03:
 

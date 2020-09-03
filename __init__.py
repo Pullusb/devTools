@@ -2,7 +2,7 @@ bl_info = {
     "name": "dev tools",
     "description": "Add tool to help developpement",
     "author": "Samuel Bernou",
-    "version": (1, 5, 0),
+    "version": (1, 6, 0),
     "blender": (2, 83, 0),
     "location": "Text editor > toolbar",
     "warning": "",
@@ -832,7 +832,7 @@ class DEV_OT_console_context_area_access(bpy.types.Operator):
             for i, a in enumerate(screen.areas):
                 if (a.x < event.mouse_x < a.x + a.width
                 and a.y < event.mouse_y < a.y + a.height):
-                    print(f"Right Clicked in screen {screen.name} area of {a.type}")
+                    print(f"Clicked in screen {screen.name} area of {a.type}")
                     access = f'bpy.context.screen.areas[{i}]'
                     print(access)
                     if event.shift:# <- Shift click condition to paper clip
@@ -863,6 +863,62 @@ class DEV_OT_console_context_area_access(bpy.types.Operator):
         self.console_override = None
         if context.area.type == 'CONSOLE':
             self.console_override = {'screen':context.window.screen, 'area': context.area}
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
+
+class DEV_OT_create_context_override(bpy.types.Operator):
+    bl_idname = "devtools.create_context_override"
+    bl_label = "Context override"
+    bl_description = "Create a context override function for text editor (quick inline in console) in related to clicked area\n(shift+clic to insert in clipboard)"
+    bl_options = {"REGISTER", "INTERNAL"}
+
+    def modal(self, context, event):
+        if event.type == 'LEFTMOUSE':
+            screen = context.window.screen       
+            for i, a in enumerate(screen.areas):
+                if (a.x < event.mouse_x < a.x + a.width
+                and a.y < event.mouse_y < a.y + a.height):
+                    print(f"Left Clicked in screen {screen.name} area of {a.type} (coordinate {event.mouse_x}x{event.mouse_y})")
+
+                    if self.is_console:# launched from console
+                        access = f"override = {{'screen': C.window.screen, 'area': C.window.screen.area[{i}]}}"
+                        print(access)
+                        if event.shift:# <- Shift click condition to paper clip
+                            context.window_manager.clipboard = access
+                        else:
+                            bpy.ops.console.insert(self.override, text=access)
+                    
+                    else:# launched from text editor
+                    
+                        ## Generate override function
+                        access = f'''def get_override():
+    for window in bpy.context.window_manager.windows:
+        screen = window.screen
+        for area in screen.areas:
+            if area.type == '{a.type}':
+                #for region in area.regions:
+                #    if region.type == 'WINDOW':
+                return {{'window': window, 'screen': screen, 'area': area}}#, 'region': region
+'''                     
+                        if event.shift:# <- Shift click condition to paper clip
+                            context.window_manager.clipboard = access
+                        else:
+                            bpy.ops.text.insert(self.override, text= '\n'+access)
+
+                    self.report({'INFO'}, f'Screen {screen.name} area of {a.type} index {i}')#WARNING, ERROR
+                    break    
+
+            return {'FINISHED'}
+
+        elif event.type in {'RIGHTMOUSE', 'ESC'}:
+            return {'CANCELLED'}
+
+        return {'RUNNING_MODAL'}
+
+    def invoke(self, context, event):
+        self.override = {'screen':context.window.screen, 'area': context.area}
+        self.is_console = True if context.area.type == 'CONSOLE' else False
         context.window_manager.modal_handler_add(self)
         return {'RUNNING_MODAL'}
 
@@ -923,9 +979,10 @@ class DEV_PT_devTools(bpy.types.Panel):
         layout.operator(DEV_OT_timeSelection.bl_idname)
         layout.operator(DEV_OT_writeClassesTuple.bl_idname)
         layout.operator(DEV_OT_expandShortcutName.bl_idname)
+        layout.operator("devtools.create_context_override")
 
         #When text is saved externally draw more option
-        text, override = get_text(context)
+        text, _override = get_text(context)
         if text and text.filepath :#mask button if file is pure internal
             layout.separator()
             layout.operator(DEV_OT_textDiff.bl_idname)
@@ -970,6 +1027,7 @@ class DEV_PT_devTools(bpy.types.Panel):
 def devtool_console(self, context):
     layout = self.layout
     layout.operator('devtools.console_context_area_access')
+    layout.operator("devtools.create_context_override")
 
 
 ###---PREF PANEL
@@ -1066,6 +1124,7 @@ DEV_OT_insertDate,
 DEV_OT_blenderInfo,
 DEV_OT_key_printer,
 DEV_OT_console_context_area_access,
+DEV_OT_create_context_override,
 DEV_PT_devTools,
 DEV_OT_backupPref,
 DEV_PT_tools_addon_pref,
