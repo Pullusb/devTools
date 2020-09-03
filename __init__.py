@@ -2,7 +2,7 @@ bl_info = {
     "name": "dev tools",
     "description": "Add tool to help developpement",
     "author": "Samuel Bernou",
-    "version": (1, 4, 0),
+    "version": (1, 5, 0),
     "blender": (2, 83, 0),
     "location": "Text editor > toolbar",
     "warning": "",
@@ -19,6 +19,23 @@ from time import strftime
 from pathlib import Path
 
 ###---UTILITY funcs
+
+def get_addon_prefs():
+    '''
+    function to read current addon preferences properties
+    even when containing folder is renamed 
+
+    access a prop like this :
+    prefs = get_addon_prefs()
+    option_state = prefs.super_special_option
+
+    oneliner : get_addon_prefs().super_special_option
+    '''
+    import os
+    addon_name = os.path.splitext(__name__)[0]
+    preferences = bpy.context.preferences
+    addon_prefs = preferences.addons[addon_name].preferences
+    return (addon_prefs)
 
 def openFolder(folderpath):
     """
@@ -46,8 +63,9 @@ def openFolder(folderpath):
 
 def openFile(filepath):
     '''open the file at the path given with cmd relative to user's OS'''
-    preferences = bpy.context.preferences
-    addon_prefs = preferences.addons[__name__].preferences
+    # preferences = bpy.context.preferences
+    # addon_prefs = preferences.addons[__name__].preferences
+    addon_prefs = get_addon_prefs()
     editor = addon_prefs.external_editor
 
     if not filepath:
@@ -230,7 +248,8 @@ class DEV_OT_insert_import(bpy.types.Operator):
             text, override = get_text(context)#reget_override
         charPos = text.current_character
         #clip = copySelected()
-        import_text = "# coding: utf-8\nimport bpy\nimport os\nfrom os import listdir\nfrom os.path import join, dirname, basename, exists, isfile, isdir, splitext\nimport re, fnmatch, glob\nfrom mathutils import Vector, Matrix\nfrom math import radians, degrees\nC = bpy.context\nD = bpy.data\nscene = C.scene\n"
+        #TODO put the import in external file for user customisation
+        import_text = "import bpy\nimport os\nfrom os import listdir\nfrom os.path import join, dirname, basename, exists, isfile, isdir, splitext\nfrom pathlib import Path\nimport re, fnmatch, glob\nfrom mathutils import Vector, Matrix\nfrom math import radians, degrees\nC = bpy.context\nD = bpy.data\nscene = C.scene\n"
 
         bpy.ops.text.insert(override, text=import_text)
 
@@ -926,7 +945,7 @@ class DEV_PT_devTools(bpy.types.Panel):
         preferences = bpy.context.preferences
         external_script_dir = preferences.filepaths.script_directory
         if external_script_dir and len(external_script_dir) > 2:
-            layout.operator(DEV_OT_openFilepath.bl_idname, text='External scripts folder').fp = external_script_dir
+            layout.operator(DEV_OT_openFilepath.bl_idname, text='External scripts folder').fp = str(Path(external_script_dir))
 
         ## standard operator
         #layout.operator("wm.path_open", text='Open config location').filepath = bpy.utils.user_resource('CONFIG')
@@ -956,9 +975,8 @@ def devtool_console(self, context):
 ###---PREF PANEL
 
 def update_devtool_console_toggle(self,context):
-    
-    preferences = context.preferences
-    addon_prefs = preferences.addons[__name__].preferences
+
+    addon_prefs = get_addon_prefs()
 
     if addon_prefs.devtool_console_toggle:
         bpy.types.CONSOLE_HT_header.append(devtool_console)
@@ -982,17 +1000,20 @@ class DEV_PT_tools_addon_pref(bpy.types.AddonPreferences):
             
     def draw(self, context):
         layout = self.layout
-        text = 'Ctrl+Shift+I: classic import modules insertion   |  Ctrl+P : print(selection) insertion'
-        text1 = 'Ctrl+Alt+P: print("selection") insertion   |  Ctrl+Shift+P: print debug variable insertion'
-        text2 = 'Ctrl+L : Quote selection (with automatic quote or double quote choice)'  
-        layout.label(text=text)
-        layout.label(text=text1)
-        layout.label(text=text2)
+
+        box = layout.box()
+        box.label(text='Shortcuts')
+        col = box.column()
+        col.label(text='Ctrl+Shift+I : classic import modules insertion   |  Ctrl+P : print(selection) insertion')
+        col.label(text='Ctrl+Alt+P : print("selection") insertion   |  Ctrl+Shift+P : print debug variable insertion')
+        col.label(text='Ctrl+L : Quote selection (with automatic quote or double quote choice)')
+
         layout.prop(self, "devtool_console_toggle")
-        layout.label(text="") #separation line
+        # layout.label(text="") #separation line
+        layout.separator()
         layout.prop(self, "external_editor")
         layout.separator()
-        layout.operator(DEV_OT_backupPref.bl_idname, text='Backup user prefs and startup files')
+        layout.operator("devtools.backup_prefs", text='Backup user prefs and startup files')
 
 
 ###---KEYMAP
@@ -1077,8 +1098,7 @@ def register():
             update=update_enum_DebugPrint
         )
 
-    preferences = bpy.context.preferences
-    addon_prefs = preferences.addons[__name__].preferences
+    addon_prefs = get_addon_prefs()
 
     if addon_prefs.devtool_console_toggle:
         bpy.types.CONSOLE_HT_header.append(devtool_console)

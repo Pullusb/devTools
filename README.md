@@ -52,13 +52,25 @@ Inserting / printing infos about blender:
 #### Add text-editor shorctut:
 
 - Ctrl+Shift+I : add a quick import/classic module statement at cursor
-- Ctrl+P : add "print(*selection*)"
+- Ctrl+P : add _print(*selection*)_
+- Ctrl+Alt+P : add _print("*selection*")_
 - Ctrl+Shift+P : trigger *print debug variable*
 - Ctrl+L : Quote selection (with automatic quote or double quote choice)
 
 ---
 
 ### Updates
+
+
+1.5.0 - 2020-09-03:
+
+- Added by [1C0D](https://github.com/1C0D):
+  - feat: add direct print statement on selection "quoted" on ctrl+alt+P
+  - pref: added preference to disable click area button in console
+  - pref: added shortcut list
+
+- fix: external script location now using correct path separator (os.sep) according to user OS (using pathlib)
+- change: Changed import insert (added pathlib import and deleted obsolete "coding utf-8" statement)
 
 1.4.0 - 2020-07-22:
 
