@@ -2,7 +2,7 @@ bl_info = {
     "name": "dev tools",
     "description": "Add tool to help developpement",
     "author": "Samuel Bernou",
-    "version": (1, 6, 0),
+    "version": (1, 7, 0),
     "blender": (2, 83, 0),
     "location": "Text editor > toolbar",
     "warning": "",
@@ -97,6 +97,13 @@ def openFile(filepath):
         return {'CANCELLED'}
 
     return mess
+
+
+def copyToClipboard():
+    '''Copy selected Text to clipboard'''
+    bpy.ops.text.copy()
+    clip = bpy.context.window_manager.clipboard
+    return (clip)
 
 
 def copySelected(context): #check for selection and not clipboard. more secure and possible to do more stufs around selection

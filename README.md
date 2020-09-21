@@ -64,6 +64,15 @@ Inserting / printing infos about blender:
 
 ### Updates
 
+
+1.7.0 - 2020-09-21:
+
+- feat/fix: new copyselected method and clip handling by [1C0D](https://github.com/1C0D) ([link to changes](https://github.com/Pullusb/devTools/pull/7)):
+  - if selection, copy the selection
+  - if no selection copy word under cursor
+  - if no selection and no word under cursor copy what is in the clipboard
+  - possible to copy something, go to an empty text zone and do e.g print
+
 1.6.0 - 2020-09-03:
 
 - feat: Create some context override code  
