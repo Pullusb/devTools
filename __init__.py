@@ -2,11 +2,11 @@ bl_info = {
     "name": "dev tools",
     "description": "Add tool to help developpement",
     "author": "Samuel Bernou",
-    "version": (1, 3, 0),
-    "blender": (2, 80, 0),
+    "version": (1, 6, 0),
+    "blender": (2, 83, 0),
     "location": "Text editor > toolbar",
     "warning": "",
-    "wiki_url": "https://github.com/Pullusb/devTools",
+    "doc_url": "https://github.com/Pullusb/devTools",
     "category": "Text Editor" }
 
 import bpy
@@ -15,8 +15,28 @@ import re
 import difflib
 import subprocess
 from sys import platform
+from time import strftime
+from pathlib import Path
 
 ###---UTILITY funcs
+
+def get_addon_prefs():
+    '''
+    function to read current addon preferences properties
+    even when containing folder is renamed 
+
+    access a prop like this :
+    prefs = get_addon_prefs()
+    option_state = prefs.super_special_option
+
+    oneliner : get_addon_prefs().super_special_option
+    '''
+    import os
+    addon_name = os.path.splitext(__name__)[0]
+    preferences = bpy.context.preferences
+    addon_prefs = preferences.addons[addon_name].preferences
+    return (addon_prefs)
+
 
 def openFolder(folderpath):
     """
@@ -44,8 +64,9 @@ def openFolder(folderpath):
 
 def openFile(filepath):
     '''open the file at the path given with cmd relative to user's OS'''
-    preferences = bpy.context.preferences
-    addon_prefs = preferences.addons[__name__].preferences
+    # preferences = bpy.context.preferences
+    # addon_prefs = preferences.addons[__name__].preferences
+    addon_prefs = get_addon_prefs()
     editor = addon_prefs.external_editor
 
     if not filepath:
@@ -75,15 +96,57 @@ def openFile(filepath):
         mess = 'Text editor not found ' + mess
         return {'CANCELLED'}
 
-
     return mess
 
-def copySelected():
-    '''Copy selected Text'''
 
-    bpy.ops.text.copy()
-    clip = bpy.context.window_manager.clipboard
-    return (clip)
+def copySelected(context): #check for selection and not clipboard. more secure and possible to do more stufs around selection
+    
+    text = context.space_data.text
+    current_line = text.current_line
+    select_end_line = text.select_end_line
+
+    current_character = text.current_character
+    select_end_character = text.select_end_character
+
+    # if there is no selected text return None
+    if current_line == select_end_line:
+        if current_character == select_end_character:
+            return None
+        else:
+            return current_line.body[min(current_character, select_end_character):max(current_character, select_end_character)]
+
+    text_return = None
+    writing = False
+    normal_order = True  # selection from top to bottom
+
+    for line in text.lines:
+        if not writing:
+            if line == current_line:
+                text_return = current_line.body[current_character:] + "\n"
+                writing = True
+                continue
+            elif line == select_end_line:
+                text_return = select_end_line.body[select_end_character:] + "\n"
+                writing = True
+                normal_order = False
+                continue
+        else:
+            if normal_order:
+                if line == select_end_line:
+                    text_return += select_end_line.body[:select_end_character]
+                    break
+                else:
+                    text_return += line.body + "\n"
+                    continue
+            else:
+                if line == current_line:
+                    text_return += current_line.body[:current_character]
+                    break
+                else:
+                    text_return += line.body + "\n"
+                    continue
+
+    return text_return
 
 
 def print_string_variable(clip,linum=''):
@@ -115,6 +178,7 @@ def Fixindentation(Loaded_text, charPos):
 
     return (FormattedText)
 
+
 def re_split_line(line):
     '''
     take a line string and return a 3 element list:
@@ -135,6 +199,10 @@ def get_text(context):
                 'edit_text' : text
                 }
     return(text, override)
+    
+def update_enum_DebugPrint(self, context):
+
+    eval('bpy.ops.%s()' % self.enum_DebugPrint)
 
 
 ###---TASKS
@@ -145,9 +213,8 @@ class DEV_OT_simplePrint(bpy.types.Operator):
     bl_description = "Add a new line with debug print of selected text\n(replace clipboard)"
     bl_options = {"REGISTER"}
 
-    bpy.types.Scene.line_in_debug_print = bpy.props.BoolProperty(
-    name="include line num", description='include line number in print', default=False)
-
+    quote: bpy.props.BoolProperty()
+    
     @classmethod
     def poll(cls, context):
         return context.area.type == 'TEXT_EDITOR'
@@ -157,9 +224,19 @@ class DEV_OT_simplePrint(bpy.types.Operator):
         text, override = get_text(context)
 
         #create debug print from variable selection
-        charPos = text.current_character
-        clip = copySelected()
-        debugPrint = 'print({0})'.format(clip)#'print({0})#Dbg'
+        # charPos = text.current_character
+        clip = copySelected(context)
+   
+        if clip is None: #copy word under cursor
+            bpy.ops.text.select_word()
+            clip = copySelected(context)
+            if clip is None: #in nothing under cursor. paste what is in clipboard
+                clip = bpy.context.window_manager.clipboard
+
+        if self.quote:
+            debugPrint = f'print("{clip}")' #'print({0})#Dbg'
+        else:
+            debugPrint = f'print({clip})' #'print({0})#Dbg'
 
         ###On a new line
         # heading_spaces = re.search('^(\s*).*', text.current_line.body).group(1)
@@ -171,14 +248,12 @@ class DEV_OT_simplePrint(bpy.types.Operator):
         bpy.ops.text.insert(override, text=debugPrint)
         return {"FINISHED"}
 
+
 class DEV_OT_quote(bpy.types.Operator):
     bl_idname = "devtools.quote"
     bl_label = "quote text"
     bl_description = "quote text"
     bl_options = {"REGISTER"}
-
-    bpy.types.Scene.line_in_debug_print = bpy.props.BoolProperty(
-    name="include line num", description='include line number in print', default=False)
 
     @classmethod
     def poll(cls, context):
@@ -186,8 +261,15 @@ class DEV_OT_quote(bpy.types.Operator):
 
     def execute(self, context):
         text, override = get_text(context)
-        charPos = text.current_character
+        # charPos = text.current_character
         clip = copySelected()
+   
+        if clip is None: #copy word under cursor
+            bpy.ops.text.select_word()
+            clip = copySelected(context)
+            if clip is None: #in nothing under cursor. paste what is in clipboard
+                clip = bpy.context.window_manager.clipboard
+
         if '"' in clip:
             debugPrint = "'{0}'".format(clip)#'print({0})#Dbg'
         else:
@@ -223,7 +305,8 @@ class DEV_OT_insert_import(bpy.types.Operator):
             text, override = get_text(context)#reget_override
         charPos = text.current_character
         #clip = copySelected()
-        import_text = "# coding: utf-8\nimport bpy\nimport os\nfrom os import listdir\nfrom os.path import join, dirname, basename, exists, isfile, isdir, splitext\nimport re, fnmatch, glob\nfrom mathutils import Vector, Matrix\nfrom math import radians, degrees\nC = bpy.context\nD = bpy.data\nscene = C.scene\n"
+        #TODO put the import in external file for user customisation
+        import_text = "import bpy\nimport os\nfrom os import listdir\nfrom os.path import join, dirname, basename, exists, isfile, isdir, splitext\nfrom pathlib import Path\nimport re, fnmatch, glob\nfrom mathutils import Vector, Matrix\nfrom math import radians, degrees\nC = bpy.context\nD = bpy.data\nscene = C.scene\n"
 
         bpy.ops.text.insert(override, text=import_text)
 
@@ -232,7 +315,6 @@ class DEV_OT_insert_import(bpy.types.Operator):
         context.space_data.show_syntax_highlight = True
         #context.space_data.show_line_highlight = True
         return {"FINISHED"}
-
 
 
 class DEV_OT_debugPrintVariable(bpy.types.Operator):
@@ -254,7 +336,14 @@ class DEV_OT_debugPrintVariable(bpy.types.Operator):
 
         #create debug print from variable selection
         charPos = text.current_character
-        clip = copySelected()
+        clip = copySelected(context)
+   
+        if clip is None: #copy word under cursor
+            bpy.ops.text.select_word()
+            clip = copySelected(context)
+            if clip is None: #in nothing under cursor. paste what is in clipboard
+                clip = bpy.context.window_manager.clipboard
+
         if bpy.context.scene.line_in_debug_print:
             debugPrint = print_string_variable(clip, linum=text.current_line_index+1)
         else:
@@ -273,7 +362,26 @@ class DEV_OT_debugPrintVariable(bpy.types.Operator):
         #put a return and paste with indentation
         bpy.ops.text.insert(override, text= '\n'+new)
         return {"FINISHED"}
+        
 
+class DEV_OT_deleteAllDebugPrint(bpy.types.Operator):
+    bl_idname = "devtools.delete_all_debug_print"
+    bl_label = "Delete all debug print"
+    bl_description = "Delete all debug print"
+    bl_options = {"REGISTER"}
+    
+    @classmethod
+    def poll(cls, context):
+        return context.area.type == 'TEXT_EDITOR' #not really necessary the menu is there...
+        
+    def execute(self, context):
+        text, _override = get_text(context)
+        count = 0
+        for i, lineOb in enumerate(text.lines):
+            if lineOb.body.endswith('#Dbg'):#detect debug lines
+                lineOb.body = ""
+
+        return {"FINISHED"}
 
 
 class DEV_OT_disableAllDebugPrint(bpy.types.Operator):
@@ -303,7 +411,6 @@ class DEV_OT_disableAllDebugPrint(bpy.types.Operator):
             mess = 'No line commented'
         self.report({'INFO'}, mess)
         return {"FINISHED"}
-
 
 
 class DEV_OT_enableAllDebugPrint(bpy.types.Operator):
@@ -475,6 +582,7 @@ class DEV_OT_updateDebugLinum(bpy.types.Operator):
 
         return {"FINISHED"}
 
+
 class DEV_OT_writeClassesTuple(bpy.types.Operator):
     bl_idname = "devtools.write_classes_tuple"
     bl_label = "Write classes tuple"
@@ -496,6 +604,7 @@ class DEV_OT_writeClassesTuple(bpy.types.Operator):
         text.write(block)
 
         return {"FINISHED"}
+
 
 class DEV_OT_textDiff(bpy.types.Operator):
     bl_idname = "devtools.diff_internal_external"
@@ -543,6 +652,7 @@ class DEV_OT_textDiff(bpy.types.Operator):
         self.report({'INFO'}, mess)
         return {"FINISHED"}
 
+
 class DEV_OT_openExternalEditor(bpy.types.Operator):
     bl_idname = "devtools.open_in_default_editor"
     bl_label = "Open externally"
@@ -563,6 +673,7 @@ class DEV_OT_openExternalEditor(bpy.types.Operator):
         self.report({'INFO'}, mess)
         return {"FINISHED"}
 
+
 class DEV_OT_openScriptFolder(bpy.types.Operator):
     bl_idname = "devtools.open_script_folder"
     bl_label = "Open folder"
@@ -582,6 +693,7 @@ class DEV_OT_openScriptFolder(bpy.types.Operator):
 
         self.report({'INFO'}, mess)
         return {"FINISHED"}
+
 
 class DEV_OT_printResourcesPaths(bpy.types.Operator):
     bl_idname = "devtools.print_resources_path"
@@ -633,17 +745,18 @@ class DEV_OT_openFilepath(bpy.types.Operator):
     def execute(self, context):
         filepath = self.fp
         if not filepath:
-            print('Problem ! No filepath was receieved in operator')
+            print('Problem ! No filepath was received in operator')
             return {"CANCELLED"}
 
         if not os.path.exists(filepath):
-            print('filepath not found', filepath)
+            print('Filepath not found', filepath)
             return {"CANCELLED"}
 
         mess = openFolder(filepath)
 
         self.report({'INFO'}, mess)
         return {"FINISHED"}
+
 
 class DEV_OT_insertDate(bpy.types.Operator):
     bl_idname = "devtools.insert_date"
@@ -663,7 +776,6 @@ class DEV_OT_insertDate(bpy.types.Operator):
             context.space_data.text = text
             text, override = get_text(context)#reget_override
 
-        from time import strftime
         content = strftime('%Y/%m/%d')
         #if current_line
         print( strftime('---date---\n%c\n%A %B') )
@@ -680,6 +792,7 @@ class DEV_OT_insertDate(bpy.types.Operator):
         ## print detailed version -> %c: full detailed, %A %B full month and day
         bpy.ops.text.insert(override, text=content)
         return {"FINISHED"}
+
 
 class DEV_OT_blenderInfo(bpy.types.Operator):
     bl_idname = "devtools.blender_info"
@@ -726,6 +839,7 @@ class DEV_OT_blenderInfo(bpy.types.Operator):
         print('--------\nMinimal infos:\n'+build_text+'\n------\n')
         self.report({'INFO'}, 'Full info Printed in console')
         return {"FINISHED"}
+
 
 class DEV_OT_key_printer(bpy.types.Operator):
     bl_idname = "devtools.keypress_tester"
@@ -782,7 +896,7 @@ class DEV_OT_console_context_area_access(bpy.types.Operator):
             for i, a in enumerate(screen.areas):
                 if (a.x < event.mouse_x < a.x + a.width
                 and a.y < event.mouse_y < a.y + a.height):
-                    print(f"Right Clicked in screen {screen.name} area of {a.type}")
+                    print(f"Clicked in screen {screen.name} area of {a.type}")
                     access = f'bpy.context.screen.areas[{i}]'
                     print(access)
                     if event.shift:# <- Shift click condition to paper clip
@@ -816,6 +930,97 @@ class DEV_OT_console_context_area_access(bpy.types.Operator):
         context.window_manager.modal_handler_add(self)
         return {'RUNNING_MODAL'}
 
+
+class DEV_OT_create_context_override(bpy.types.Operator):
+    bl_idname = "devtools.create_context_override"
+    bl_label = "Context override"
+    bl_description = "Create a context override function for text editor (quick inline in console) in related to clicked area\n(shift+clic to insert in clipboard)"
+    bl_options = {"REGISTER", "INTERNAL"}
+
+    def modal(self, context, event):
+        if event.type == 'LEFTMOUSE':
+            screen = context.window.screen       
+            for i, a in enumerate(screen.areas):
+                if (a.x < event.mouse_x < a.x + a.width
+                and a.y < event.mouse_y < a.y + a.height):
+                    print(f"Left Clicked in screen {screen.name} area of {a.type} (coordinate {event.mouse_x}x{event.mouse_y})")
+
+                    if self.is_console:# launched from console
+                        access = f"override = {{'screen': C.window.screen, 'area': C.window.screen.area[{i}]}}"
+                        print(access)
+                        if event.shift:# <- Shift click condition to paper clip
+                            context.window_manager.clipboard = access
+                        else:
+                            bpy.ops.console.insert(self.override, text=access)
+                    
+                    else:# launched from text editor
+                    
+                        ## Generate override function
+                        access = f'''def get_override():
+    for window in bpy.context.window_manager.windows:
+        screen = window.screen
+        for area in screen.areas:
+            if area.type == '{a.type}':
+                #for region in area.regions:
+                #    if region.type == 'WINDOW':
+                return {{'window': window, 'screen': screen, 'area': area}}#, 'region': region
+'''                     
+                        if event.shift:# <- Shift click condition to paper clip
+                            context.window_manager.clipboard = access
+                        else:
+                            bpy.ops.text.insert(self.override, text= '\n'+access)
+
+                    self.report({'INFO'}, f'Screen {screen.name} area of {a.type} index {i}')#WARNING, ERROR
+                    break    
+
+            return {'FINISHED'}
+
+        elif event.type in {'RIGHTMOUSE', 'ESC'}:
+            return {'CANCELLED'}
+
+        return {'RUNNING_MODAL'}
+
+    def invoke(self, context, event):
+        self.override = {'screen':context.window.screen, 'area': context.area}
+        self.is_console = True if context.area.type == 'CONSOLE' else False
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
+
+class DEV_OT_backupPref(bpy.types.Operator):
+    bl_idname = "devtools.backup_prefs"
+    bl_label = "Backup user preferences"
+    bl_description = "Backup user preferences in a subfolder of user config (also backup startup file)\nOpen folder after backup"
+    bl_options = {"REGISTER"}
+
+    def execute(self, context):
+        config = Path(bpy.utils.user_resource('CONFIG'))
+        mypref = config / 'userpref.blend'
+        mystartup = config / 'startup.blend'
+
+        if not mypref.exists():
+            self.report({'ERROR'}, 'No pref found to backup')
+            return {"CANCELLED"}
+
+        backup_main_folder = config / 'userpref_backups'
+        
+        # timestamp on file : strftime('userpref_%Y-%m-%d_%H-%M-%S.blend')
+        timestamp = strftime('%Y-%m-%d_%H-%M-%S')
+        backup = backup_main_folder / timestamp
+        backup.mkdir(parents=True, exist_ok=True)
+
+        import shutil
+        shutil.copy(mypref, backup)
+
+        openFolder(str(backup))
+
+        if mystartup.exists():
+            shutil.copy(mystartup, backup)
+            
+        self.report({'INFO'}, f'Pref backup at {backup}')
+        return {"FINISHED"}
+
+
 ###---PANEL
 
 class DEV_PT_devTools(bpy.types.Panel):
@@ -831,17 +1036,17 @@ class DEV_PT_devTools(bpy.types.Panel):
         row.prop(context.scene, 'line_in_debug_print')
         row.operator(DEV_OT_updateDebugLinum.bl_idname, text='', icon='FILE_REFRESH')#Update
         layout.operator(DEV_OT_debugPrintVariable.bl_idname)
-        layout.separator()
-        layout.operator(DEV_OT_disableAllDebugPrint.bl_idname)
-        layout.operator(DEV_OT_enableAllDebugPrint.bl_idname)
+        layout.label(text="Options")
+        layout.prop(context.scene, 'enum_DebugPrint', text='', expand=False)
         layout.separator()
 
         layout.operator(DEV_OT_timeSelection.bl_idname)
         layout.operator(DEV_OT_writeClassesTuple.bl_idname)
         layout.operator(DEV_OT_expandShortcutName.bl_idname)
+        layout.operator("devtools.create_context_override")
 
         #When text is saved externally draw more option
-        text, override = get_text(context)
+        text, _override = get_text(context)
         if text and text.filepath :#mask button if file is pure internal
             layout.separator()
             layout.operator(DEV_OT_textDiff.bl_idname)
@@ -851,17 +1056,23 @@ class DEV_PT_devTools(bpy.types.Panel):
         layout.label(text='open scripts places')
         row = layout.row()
         #local default installed addons (release)
-        row.operator(DEV_OT_openFilepath.bl_idname, text='built-in addons').fp = os.path.join(bpy.utils.resource_path('LOCAL') , 'scripts', 'addons')
+        row.operator(DEV_OT_openFilepath.bl_idname, text='Built-in addons').fp = os.path.join(bpy.utils.resource_path('LOCAL') , 'scripts', 'addons')
 
         #Local user addon source (usually appdata roaming)\nWhere it goes when you do an 'install from file'
-        row.operator(DEV_OT_openFilepath.bl_idname, text='users addons').fp = bpy.utils.user_resource('SCRIPTS', "addons")
+        row.operator(DEV_OT_openFilepath.bl_idname, text='Users addons').fp = bpy.utils.user_resource('SCRIPTS', "addons")
 
         layout = self.layout
         #common script (if specified)
         preferences = bpy.context.preferences
         external_script_dir = preferences.filepaths.script_directory
         if external_script_dir and len(external_script_dir) > 2:
-            layout.operator(DEV_OT_openFilepath.bl_idname, text='external scripts folder').fp = external_script_dir
+            layout.operator(DEV_OT_openFilepath.bl_idname, text='External scripts folder').fp = str(Path(external_script_dir))
+
+        ## standard operator
+        #layout.operator("wm.path_open", text='Open config location').filepath = bpy.utils.user_resource('CONFIG')
+        layout.operator(DEV_OT_openFilepath.bl_idname, text='Config folder').fp = str(Path(bpy.utils.user_resource('CONFIG')))
+        
+        ##layout.operator(DEV_OT_backupPref.bl_idname, text='backup user prefs')# in addon prefs
 
         layout.separator()
         #path printer
@@ -880,21 +1091,51 @@ class DEV_PT_devTools(bpy.types.Panel):
 def devtool_console(self, context):
     layout = self.layout
     layout.operator('devtools.console_context_area_access')
+    layout.operator("devtools.create_context_override")
 
 
 ###---PREF PANEL
 
+def update_devtool_console_toggle(self,context):
+
+    addon_prefs = get_addon_prefs()
+
+    if addon_prefs.devtool_console_toggle:
+        bpy.types.CONSOLE_HT_header.append(devtool_console)
+    else:
+        bpy.types.CONSOLE_HT_header.remove(devtool_console)
+        
+
 class DEV_PT_tools_addon_pref(bpy.types.AddonPreferences):
     bl_idname = __name__
 
-    external_editor : bpy.props.StringProperty(
+    external_editor: bpy.props.StringProperty(
             name="External Editor",
             subtype='FILE_PATH',
             )
 
+    devtool_console_toggle: bpy.props.BoolProperty(
+            name="Console: get clicked area",
+            default=True,
+            update=update_devtool_console_toggle
+            )
+            
     def draw(self, context):
         layout = self.layout
+
+        box = layout.box()
+        box.label(text='Shortcuts')
+        col = box.column()
+        col.label(text='Ctrl+Shift+I : classic import modules insertion   |  Ctrl+P : print(selection) insertion')
+        col.label(text='Ctrl+Alt+P : print("selection") insertion   |  Ctrl+Shift+P : print debug variable insertion')
+        col.label(text='Ctrl+L : Quote selection (with automatic quote or double quote choice)')
+
+        layout.prop(self, "devtool_console_toggle")
+        # layout.label(text="") #separation line
+        layout.separator()
         layout.prop(self, "external_editor")
+        layout.separator()
+        layout.operator("devtools.backup_prefs", text='Backup user prefs and startup files')
 
 
 ###---KEYMAP
@@ -906,6 +1147,9 @@ def register_keymaps():
     km = wm.keyconfigs.addon.keymaps.new(name = "Text", space_type = "TEXT_EDITOR")
 
     kmi = km.keymap_items.new("devtools.simple_print", type = "P", value = "PRESS", ctrl = True)
+    kmi.properties.quote = False
+    kmi = km.keymap_items.new("devtools.simple_print", type = "P", value = "PRESS", ctrl = True, alt = True)
+    kmi.properties.quote = True
     kmi = km.keymap_items.new("devtools.debug_print_variable", type = "P", value = "PRESS", ctrl = True, shift = True)
     kmi = km.keymap_items.new("devtools.quote", type = "L", value = "PRESS", ctrl = True)
     kmi = km.keymap_items.new("devtools.insert_import", type = "I", value = "PRESS", ctrl = True, shift=True)
@@ -930,6 +1174,7 @@ DEV_OT_insert_import,
 DEV_OT_debugPrintVariable,
 DEV_OT_disableAllDebugPrint,
 DEV_OT_enableAllDebugPrint,
+DEV_OT_deleteAllDebugPrint,
 DEV_OT_expandShortcutName,
 DEV_OT_textDiff,
 DEV_OT_openExternalEditor,
@@ -943,7 +1188,9 @@ DEV_OT_insertDate,
 DEV_OT_blenderInfo,
 DEV_OT_key_printer,
 DEV_OT_console_context_area_access,
+DEV_OT_create_context_override,
 DEV_PT_devTools,
+DEV_OT_backupPref,
 DEV_PT_tools_addon_pref,
 )
 
@@ -952,14 +1199,39 @@ def register():
     if not bpy.app.background:
         for cls in classes:
             bpy.utils.register_class(cls)
-
+            
         register_keymaps()
-    bpy.types.CONSOLE_HT_header.append(devtool_console)
+            
+    bpy.types.Scene.enum_DebugPrint = bpy.props.EnumProperty(
+            name = "enum_DebugPrint",
+            description = "options",
+            items = [
+                ("devtools.enable_all_debug_print", 
+                "Enable all debug print", 
+                "uncomment all lines finishing wih '#Dbg'"),
+                
+                ("devtools.disable_all_debug_print", 
+                "Disable all debug print", 
+                "comment all lines finishing with '#Dbg'"),
+                
+                ("devtools.delete_all_debug_print", 
+                "Delete all debug print", 
+                "Delete all debug prints"), 
+            ],
+            update=update_enum_DebugPrint
+        )
+
+    addon_prefs = get_addon_prefs()
+
+    if addon_prefs.devtool_console_toggle:
+        bpy.types.CONSOLE_HT_header.append(devtool_console)
     # in menu -> CONSOLE_MT_editor_menus
 
 def unregister():
     
     bpy.types.CONSOLE_HT_header.remove(devtool_console)
+    del bpy.types.Scene.enum_DebugPrint
+    
     if not bpy.app.background:
         unregister_keymaps()
 
