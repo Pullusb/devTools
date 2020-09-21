@@ -37,6 +37,7 @@ def get_addon_prefs():
     addon_prefs = preferences.addons[addon_name].preferences
     return (addon_prefs)
 
+
 def openFolder(folderpath):
     """
     open the folder at the path given
@@ -95,15 +96,57 @@ def openFile(filepath):
         mess = 'Text editor not found ' + mess
         return {'CANCELLED'}
 
-
     return mess
 
-def copySelected():
-    '''Copy selected Text'''
 
-    bpy.ops.text.copy()
-    clip = bpy.context.window_manager.clipboard
-    return (clip)
+def copySelected(context): #check for selection and not clipboard. more secure and possible to do more stufs around selection
+    
+    text = context.space_data.text
+    current_line = text.current_line
+    select_end_line = text.select_end_line
+
+    current_character = text.current_character
+    select_end_character = text.select_end_character
+
+    # if there is no selected text return None
+    if current_line == select_end_line:
+        if current_character == select_end_character:
+            return None
+        else:
+            return current_line.body[min(current_character, select_end_character):max(current_character, select_end_character)]
+
+    text_return = None
+    writing = False
+    normal_order = True  # selection from top to bottom
+
+    for line in text.lines:
+        if not writing:
+            if line == current_line:
+                text_return = current_line.body[current_character:] + "\n"
+                writing = True
+                continue
+            elif line == select_end_line:
+                text_return = select_end_line.body[select_end_character:] + "\n"
+                writing = True
+                normal_order = False
+                continue
+        else:
+            if normal_order:
+                if line == select_end_line:
+                    text_return += select_end_line.body[:select_end_character]
+                    break
+                else:
+                    text_return += line.body + "\n"
+                    continue
+            else:
+                if line == current_line:
+                    text_return += current_line.body[:current_character]
+                    break
+                else:
+                    text_return += line.body + "\n"
+                    continue
+
+    return text_return
 
 
 def print_string_variable(clip,linum=''):
@@ -134,6 +177,7 @@ def Fixindentation(Loaded_text, charPos):
             FormattedText = ' '*charPos + FormattedText
 
     return (FormattedText)
+
 
 def re_split_line(line):
     '''
@@ -181,8 +225,14 @@ class DEV_OT_simplePrint(bpy.types.Operator):
 
         #create debug print from variable selection
         # charPos = text.current_character
-        clip = copySelected()
-        
+        clip = copySelected(context)
+   
+        if clip is None: #copy word under cursor
+            bpy.ops.text.select_word()
+            clip = copySelected(context)
+            if clip is None: #in nothing under cursor. paste what is in clipboard
+                clip = bpy.context.window_manager.clipboard
+
         if self.quote:
             debugPrint = f'print("{clip}")' #'print({0})#Dbg'
         else:
@@ -213,6 +263,13 @@ class DEV_OT_quote(bpy.types.Operator):
         text, override = get_text(context)
         # charPos = text.current_character
         clip = copySelected()
+   
+        if clip is None: #copy word under cursor
+            bpy.ops.text.select_word()
+            clip = copySelected(context)
+            if clip is None: #in nothing under cursor. paste what is in clipboard
+                clip = bpy.context.window_manager.clipboard
+
         if '"' in clip:
             debugPrint = "'{0}'".format(clip)#'print({0})#Dbg'
         else:
@@ -279,7 +336,14 @@ class DEV_OT_debugPrintVariable(bpy.types.Operator):
 
         #create debug print from variable selection
         charPos = text.current_character
-        clip = copySelected()
+        clip = copySelected(context)
+   
+        if clip is None: #copy word under cursor
+            bpy.ops.text.select_word()
+            clip = copySelected(context)
+            if clip is None: #in nothing under cursor. paste what is in clipboard
+                clip = bpy.context.window_manager.clipboard
+
         if bpy.context.scene.line_in_debug_print:
             debugPrint = print_string_variable(clip, linum=text.current_line_index+1)
         else:
