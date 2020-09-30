@@ -2,7 +2,7 @@ bl_info = {
     "name": "dev tools",
     "description": "Add tool to help developpement",
     "author": "Samuel Bernou",
-    "version": (1, 6, 0),
+    "version": (1, 7, 0),
     "blender": (2, 83, 0),
     "location": "Text editor > toolbar",
     "warning": "",
@@ -97,6 +97,13 @@ def openFile(filepath):
         return {'CANCELLED'}
 
     return mess
+
+
+def copyToClipboard():
+    '''Copy selected Text to clipboard'''
+    bpy.ops.text.copy()
+    clip = bpy.context.window_manager.clipboard
+    return (clip)
 
 
 def copySelected(context): #check for selection and not clipboard. more secure and possible to do more stufs around selection
@@ -229,8 +236,10 @@ class DEV_OT_simplePrint(bpy.types.Operator):
    
         if clip is None: #copy word under cursor
             bpy.ops.text.select_word()
-            clip = copySelected(context)
-            if clip is None: #in nothing under cursor. paste what is in clipboard
+            try:  #if nothing under cursor. paste what is in clipboard
+                clip = copySelected(context)
+                assert clip is not None
+            except AssertionError:
                 clip = bpy.context.window_manager.clipboard
 
         if self.quote:
@@ -266,8 +275,10 @@ class DEV_OT_quote(bpy.types.Operator):
    
         if clip is None: #copy word under cursor
             bpy.ops.text.select_word()
-            clip = copySelected(context)
-            if clip is None: #in nothing under cursor. paste what is in clipboard
+            try:  #if nothing under cursor. paste what is in clipboard
+                clip = copySelected(context)
+                assert clip is not None
+            except AssertionError:
                 clip = bpy.context.window_manager.clipboard
 
         if '"' in clip:
@@ -340,8 +351,10 @@ class DEV_OT_debugPrintVariable(bpy.types.Operator):
    
         if clip is None: #copy word under cursor
             bpy.ops.text.select_word()
-            clip = copySelected(context)
-            if clip is None: #in nothing under cursor. paste what is in clipboard
+            try:  #if nothing under cursor. paste what is in clipboard
+                clip = copySelected(context)
+                assert clip is not None
+            except AssertionError:
                 clip = bpy.context.window_manager.clipboard
 
         if bpy.context.scene.line_in_debug_print:
