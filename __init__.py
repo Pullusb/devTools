@@ -236,8 +236,10 @@ class DEV_OT_simplePrint(bpy.types.Operator):
    
         if clip is None: #copy word under cursor
             bpy.ops.text.select_word()
-            clip = copySelected(context)
-            if clip is None: #in nothing under cursor. paste what is in clipboard
+            try:  #if nothing under cursor. paste what is in clipboard
+                clip = copySelected(context)
+                assert clip is not None
+            except AssertionError:
                 clip = bpy.context.window_manager.clipboard
 
         if self.quote:
@@ -273,8 +275,10 @@ class DEV_OT_quote(bpy.types.Operator):
    
         if clip is None: #copy word under cursor
             bpy.ops.text.select_word()
-            clip = copySelected(context)
-            if clip is None: #in nothing under cursor. paste what is in clipboard
+            try:  #if nothing under cursor. paste what is in clipboard
+                clip = copySelected(context)
+                assert clip is not None
+            except AssertionError:
                 clip = bpy.context.window_manager.clipboard
 
         if '"' in clip:
@@ -347,8 +351,10 @@ class DEV_OT_debugPrintVariable(bpy.types.Operator):
    
         if clip is None: #copy word under cursor
             bpy.ops.text.select_word()
-            clip = copySelected(context)
-            if clip is None: #in nothing under cursor. paste what is in clipboard
+            try:  #if nothing under cursor. paste what is in clipboard
+                clip = copySelected(context)
+                assert clip is not None
+            except AssertionError:
                 clip = bpy.context.window_manager.clipboard
 
         if bpy.context.scene.line_in_debug_print:
