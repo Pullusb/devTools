@@ -959,7 +959,7 @@ class DEV_OT_create_context_override(bpy.types.Operator):
                     print(f"Left Clicked in screen {screen.name} area of {a.type} (coordinate {event.mouse_x}x{event.mouse_y})")
 
                     if self.is_console:# launched from console
-                        access = f"override = {{'screen': C.window.screen, 'area': C.window.screen.area[{i}]}}"
+                        access = f"override = {{'screen': C.window.screen, 'area': C.window.screen.areas[{i}]}}"
                         print(access)
                         if event.shift:# <- Shift click condition to paper clip
                             context.window_manager.clipboard = access
