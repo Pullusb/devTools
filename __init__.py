@@ -1,12 +1,13 @@
 bl_info = {
     "name": "dev tools",
-    "description": "Add tool to help developpement",
+    "description": "Add tools in text editor to help development",
     "author": "Samuel Bernou",
-    "version": (1, 7, 0),
+    "version": (1, 7, 1),
     "blender": (2, 83, 0),
-    "location": "Text editor > toolbar",
+    "location": "Text editor > toolbar and console header",
     "warning": "",
     "doc_url": "https://github.com/Pullusb/devTools",
+    "tracker_url": "https://github.com/Pullusb/devTools/issues",
     "category": "Text Editor" }
 
 import bpy
@@ -86,7 +87,7 @@ def openFile(filepath):
     mess = cmd + ' ' + filepath
     fullcmd = [cmd,filepath]
 
-    print(fullcmd)
+    print('Command :', fullcmd)
 
     try:
         subprocess.Popen(fullcmd)
@@ -678,8 +679,12 @@ class DEV_OT_openExternalEditor(bpy.types.Operator):
 
     def execute(self, context):
         text, _override = get_text(context)
-        if text.filepath:#not necessary, button masked if no external data
-            mess = openFile(text.filepath)
+        if text.filepath: # condition only if call from search (ui button masked if no external data)
+            ret = openFile(text.filepath)
+            if 'CANCELLED' in ret:
+                mess = f'! Could not open: {text.filepath}'
+            else:
+                mess = f'Opened: {text.filepath}'
         else:
             mess = 'Text is internal only'
 
