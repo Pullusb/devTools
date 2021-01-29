@@ -1,7 +1,7 @@
 # devTools
-Blender addon - add developpement tools to blender text editor
+Blender addon - add development tools to blender text editor
   
-**[Download latest](https://github.com/Pullusb/devTools/archive/master.zip)** (left clic)
+**[Download latest](https://github.com/Pullusb/devTools/archive/master.zip)** (left click)
 <!-- **[Download latest](https://raw.githubusercontent.com/Pullusb/devTools/master/SB_devTools.py)** (right click, save Target as) -->
 
 **[Download old (2.7 version)](https://raw.githubusercontent.com/Pullusb/devTools/master/SB_devTools_279.py)** (right click, save Target as. single file)
@@ -39,12 +39,12 @@ Opening addons places on disk:
 Inserting / printing infos about blender:
 
 - **Print usefull resources path** - Print in console all paths relative to addons location, config path and more
-- **Insert date** - Insert current date at cursor position. re-clic add hour. re-re-clic add abbreviated day
+- **Insert date** - Insert current date at cursor position. re-click add hour. re-re-click add abbreviated day
 - **Release infos** - Insert blender release info (Date, Hash, branch), Usefull for bug report (print full build info in console)
 
 Modal:
 
-- **Event Keycode printer** - Modal to capture event and print event.type and event.value. serve as quick way to know keycode to use for keymap or modals
+- **Event Keycode printer** - Modal to capture event and print event.type and event.value. Serve as quick way to know keycode to use for keymap or modals
 
 #### Add button to interactive console header
 
