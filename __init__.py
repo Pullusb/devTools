@@ -2,7 +2,7 @@ bl_info = {
     "name": "dev tools",
     "description": "Add tools in text editor to help development",
     "author": "Samuel Bernou",
-    "version": (1, 7, 1),
+    "version": (1, 7, 2),
     "blender": (2, 83, 0),
     "location": "Text editor > toolbar and console header",
     "warning": "",
@@ -862,7 +862,7 @@ class DEV_OT_blenderInfo(bpy.types.Operator):
 class DEV_OT_key_printer(bpy.types.Operator):
     bl_idname = "devtools.keypress_tester"
     bl_label = "key event tester"
-    bl_description = "Any key event name will be printed in console (press ESC to stop modal)"
+    bl_description = "Any key event name will be printed in console (press ESC to stop modal)\nCtrl + Click: copy name to clipboard "
     bl_options = {"REGISTER", "UNDO"}
 
     def modal(self, context, event):
@@ -872,6 +872,8 @@ class DEV_OT_key_printer(bpy.types.Operator):
             print('key:', event.type, 'value:', event.value)
             if event.value == 'PRESS': 
                 self.report({'INFO'}, event.type)
+                if self.copy_key:
+                    context.window_manager.clipboard = f"'{event.type}'" # quoted
         ###  TESTER/
 
         ### /AREA INFOS
@@ -897,6 +899,7 @@ class DEV_OT_key_printer(bpy.types.Operator):
 
     def invoke(self, context, event):
         ## Starts the modal
+        self.copy_key = event.ctrl
         print('\n--- KEYCODE PRINT STARTED -- press ESC to stop---')#Dbg
         self.report({'INFO'}, 'keycode print started (ESC to stop), see console for details')
         context.window_manager.modal_handler_add(self)
@@ -1137,7 +1140,12 @@ class DEV_PT_tools_addon_pref(bpy.types.AddonPreferences):
             default=True,
             update=update_devtool_console_toggle
             )
-            
+
+    # copy_pressed_keys : bpy.props.BoolProperty(
+    #         name="Copy key",
+    #         default=False,
+    #         )
+
     def draw(self, context):
         layout = self.layout
 
@@ -1214,11 +1222,13 @@ DEV_PT_tools_addon_pref,
 
 
 def register():
-    if not bpy.app.background:
-        for cls in classes:
-            bpy.utils.register_class(cls)
-            
-        register_keymaps()
+    if bpy.app.background:
+        return
+
+    for cls in classes:
+        bpy.utils.register_class(cls)
+        
+    register_keymaps()
             
     bpy.types.Scene.enum_DebugPrint = bpy.props.EnumProperty(
             name = "enum_DebugPrint",
@@ -1240,21 +1250,21 @@ def register():
         )
 
     addon_prefs = get_addon_prefs()
-
     if addon_prefs.devtool_console_toggle:
         bpy.types.CONSOLE_HT_header.append(devtool_console)
     # in menu -> CONSOLE_MT_editor_menus
 
 def unregister():
-    
+    if bpy.app.background:
+        return
+
     bpy.types.CONSOLE_HT_header.remove(devtool_console)
     del bpy.types.Scene.enum_DebugPrint
     
-    if not bpy.app.background:
-        unregister_keymaps()
+    unregister_keymaps()
 
-        for cls in reversed(classes):
-            bpy.utils.unregister_class(cls)
+    for cls in reversed(classes):
+        bpy.utils.unregister_class(cls)
 
 
 if __name__ == "__main__":
