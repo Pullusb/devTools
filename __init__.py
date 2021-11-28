@@ -1,8 +1,8 @@
 bl_info = {
     "name": "dev tools",
-    "description": "Add tools in text editor to help development",
+    "description": "Add tools in text editor and console to help development",
     "author": "Samuel Bernou",
-    "version": (1, 7, 2),
+    "version": (1, 7, 3),
     "blender": (2, 83, 0),
     "location": "Text editor > toolbar and console header",
     "warning": "",
@@ -729,7 +729,7 @@ class DEV_OT_printResourcesPaths(bpy.types.Operator):
         print('Ressources path'.upper())
         print(linesep)
         print('Local default installed addons (release):\n{}\n'.format(os.path.join(bpy.utils.resource_path('LOCAL') , 'scripts', 'addons')) )
-        print('Local user addon source (usually appdata roaming)\nWhere it goes when you do an "install from file":\n{}\n'.format(bpy.utils.user_resource('SCRIPTS', "addons")) )
+        print('Local user addon source (usually appdata roaming)\nWhere it goes when you do an "install from file":\n{}\n'.format(Path(bpy.utils.user_resource('SCRIPTS')) / "addons") )
 
         preferences = bpy.context.preferences
         external_script_dir = preferences.filepaths.script_directory
@@ -1080,7 +1080,7 @@ class DEV_PT_devTools(bpy.types.Panel):
         row.operator(DEV_OT_openFilepath.bl_idname, text='Built-in addons').fp = os.path.join(bpy.utils.resource_path('LOCAL') , 'scripts', 'addons')
 
         #Local user addon source (usually appdata roaming)\nWhere it goes when you do an 'install from file'
-        row.operator(DEV_OT_openFilepath.bl_idname, text='Users addons').fp = bpy.utils.user_resource('SCRIPTS', "addons")
+        row.operator(DEV_OT_openFilepath.bl_idname, text='Users addons').fp = str(Path(bpy.utils.user_resource('SCRIPTS')) / "addons")
 
         layout = self.layout
         #common script (if specified)
