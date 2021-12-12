@@ -1,5 +1,14 @@
 # Changelog
 
+1.8.0 - 2021-12-12
+
+- feat: Selectable addon list in text-editor Dev tab with multiple view mode and filtering
+- feat: Export selected addons in a zip pack with include/exclude filters
+- feat: Quick show highlighted line addon prefs 
+- feat: Button to open addon location:
+  - Ctrl + clic: copy path
+  - Alt + clic: module name
+
 1.7.3 - 2021-11-28
 
 - fix: path to addon api change in 3.0.0

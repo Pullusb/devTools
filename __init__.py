@@ -2,7 +2,7 @@ bl_info = {
     "name": "dev tools",
     "description": "Add tools in text editor and console to help development",
     "author": "Samuel Bernou",
-    "version": (1, 7, 3),
+    "version": (1, 8, 0),
     "blender": (2, 83, 0),
     "location": "Text editor > toolbar and console header",
     "warning": "",
@@ -19,93 +19,10 @@ from sys import platform
 from time import strftime
 from pathlib import Path
 
+from . import addon_listing
+from . import fn
+
 ###---UTILITY funcs
-
-def get_addon_prefs():
-    '''
-    function to read current addon preferences properties
-    even when containing folder is renamed 
-
-    access a prop like this :
-    prefs = get_addon_prefs()
-    option_state = prefs.super_special_option
-
-    oneliner : get_addon_prefs().super_special_option
-    '''
-    import os
-    addon_name = os.path.splitext(__name__)[0]
-    preferences = bpy.context.preferences
-    addon_prefs = preferences.addons[addon_name].preferences
-    return (addon_prefs)
-
-
-def openFolder(folderpath):
-    """
-    open the folder at the path given
-    with cmd relative to user's OS
-    """
-    myOS = platform
-    if myOS.startswith(('linux','freebsd')):
-        cmd = 'xdg-open'
-    elif myOS.startswith('win'):
-        cmd = 'explorer'
-        if not folderpath:
-            return('/')
-    else:
-        cmd = 'open'
-
-    if not folderpath:
-        return('//')
-
-    fullcmd = [cmd, folderpath]
-    print(fullcmd)
-    subprocess.Popen(fullcmd)
-    return ' '.join(fullcmd)#back to string to print
-
-
-def openFile(filepath):
-    '''open the file at the path given with cmd relative to user's OS'''
-    # preferences = bpy.context.preferences
-    # addon_prefs = preferences.addons[__name__].preferences
-    addon_prefs = get_addon_prefs()
-    editor = addon_prefs.external_editor
-
-    if not filepath:
-        return('No file path !')
-
-    if editor:
-        cmd = editor
-    else:
-        myOS = platform
-        if myOS.startswith('linux') or myOS.startswith('freebsd'):# linux
-            cmd = 'xdg-open'
-        elif myOS.startswith('win'):# Windows
-            cmd = 'start'
-        else:# OS X
-            cmd = 'open'
-
-    mess = cmd + ' ' + filepath
-    fullcmd = [cmd,filepath]
-
-    print('Command :', fullcmd)
-
-    try:
-        subprocess.Popen(fullcmd)
-    except:
-        import traceback
-        traceback.print_exc()
-        mess = 'Text editor not found ' + mess
-        return {'CANCELLED'}
-
-    return mess
-
-
-def copyToClipboard():
-    '''Copy selected Text to clipboard'''
-    bpy.ops.text.copy()
-    clip = bpy.context.window_manager.clipboard
-    return (clip)
-
 
 def copySelected(context): #check for selection and not clipboard. more secure and possible to do more stufs around selection
     
@@ -680,7 +597,7 @@ class DEV_OT_openExternalEditor(bpy.types.Operator):
     def execute(self, context):
         text, _override = get_text(context)
         if text.filepath: # condition only if call from search (ui button masked if no external data)
-            ret = openFile(text.filepath)
+            ret = fn.openFile(text.filepath)
             if 'CANCELLED' in ret:
                 mess = f'! Could not open: {text.filepath}'
             else:
@@ -705,7 +622,7 @@ class DEV_OT_openScriptFolder(bpy.types.Operator):
     def execute(self, context):
         text, override = get_text(context)
         if text.filepath:
-            mess = openFolder(os.path.dirname(text.filepath))
+            mess = fn.open_folder(os.path.dirname(text.filepath))
         else:
             mess = 'Text is internal only'
 
@@ -770,7 +687,7 @@ class DEV_OT_openFilepath(bpy.types.Operator):
             print('Filepath not found', filepath)
             return {"CANCELLED"}
 
-        mess = openFolder(filepath)
+        mess = fn.open_folder(filepath)
 
         self.report({'INFO'}, mess)
         return {"FINISHED"}
@@ -1033,7 +950,7 @@ class DEV_OT_backupPref(bpy.types.Operator):
         import shutil
         shutil.copy(mypref, backup)
 
-        openFolder(str(backup))
+        fn.open_folder(str(backup))
 
         if mystartup.exists():
             shutil.copy(mystartup, backup)
@@ -1041,6 +958,38 @@ class DEV_OT_backupPref(bpy.types.Operator):
         self.report({'INFO'}, f'Pref backup at {backup}')
         return {"FINISHED"}
 
+class DEV_OT_open_element_in_os(bpy.types.Operator):
+    bl_idname = "dev.open_element_in_os"
+    bl_label = "Open Element"
+    bl_description = "Open location\nCtrl: Copy path\nAlt: Copy module name"
+    bl_options = {"REGISTER", "INTERNAL"}
+
+    filepath : bpy.props.StringProperty()
+
+    def invoke(self, context, event):
+        self.ctrl = event.ctrl
+        self.shift = event.shift
+        self.alt = event.alt
+        return self.execute(context)
+
+    def execute(self, context):
+        if self.ctrl: # copy path
+            context.window_manager.clipboard = self.filepath
+            self.report({'INFO'}, f'Copied: "{self.filepath}"')
+
+        elif self.alt: # copy name
+            f = Path(self.filepath)
+            if f.name == '__init__.py': # multifile
+                name = f.parent.name
+            else: # single file
+                name = f.stem # 'name' to include '.py'
+            context.window_manager.clipboard = name
+            self.report({'INFO'}, f'Copied: "{name}"')
+        
+        else:
+            fn.open_folder(self.filepath)
+
+        return {"FINISHED"}
 
 ###---PANEL
 
@@ -1119,7 +1068,7 @@ def devtool_console(self, context):
 
 def update_devtool_console_toggle(self,context):
 
-    addon_prefs = get_addon_prefs()
+    addon_prefs = fn.get_addon_prefs()
 
     if addon_prefs.devtool_console_toggle:
         bpy.types.CONSOLE_HT_header.append(devtool_console)
@@ -1146,8 +1095,25 @@ class DEV_PT_tools_addon_pref(bpy.types.AddonPreferences):
     #         default=False,
     #         )
 
+    devtool_addonpack_exclude: bpy.props.StringProperty(
+        name='Always Exclude',
+        default='__pycache__',
+        description='Additional exclusion filter for addon packing functionality (comma separated)\nFor Export Zip operator (text editor sidebar > Dev tab > Addon List > Export Zip)'
+        )
+
     def draw(self, context):
         layout = self.layout
+
+        layout.operator("devtools.backup_prefs", text='Backup user prefs and startup files')
+
+        layout.prop(self, "devtool_console_toggle")
+        layout.separator()
+
+        layout.prop(self, "external_editor")
+        col = layout.column()
+        col.label(text="Option for addon packing zip:")
+        col.prop(self, "devtool_addonpack_exclude")
+        # layout.separator()
 
         box = layout.box()
         box.label(text='Shortcuts')
@@ -1156,12 +1122,7 @@ class DEV_PT_tools_addon_pref(bpy.types.AddonPreferences):
         col.label(text='Ctrl+Alt+P : print("selection") insertion   |  Ctrl+Shift+P : print debug variable insertion')
         col.label(text='Ctrl+L : Quote selection (with automatic quote or double quote choice)')
 
-        layout.prop(self, "devtool_console_toggle")
-        # layout.label(text="") #separation line
-        layout.separator()
-        layout.prop(self, "external_editor")
-        layout.separator()
-        layout.operator("devtools.backup_prefs", text='Backup user prefs and startup files')
+
 
 
 ###---KEYMAP
@@ -1194,6 +1155,7 @@ def unregister_keymaps():
 ###---REGISTER
 
 classes = (
+DEV_OT_open_element_in_os,
 DEV_OT_simplePrint,
 DEV_OT_quote,
 DEV_OT_insert_import,
@@ -1249,14 +1211,18 @@ def register():
             update=update_enum_DebugPrint
         )
 
-    addon_prefs = get_addon_prefs()
+    addon_prefs = fn.get_addon_prefs()
     if addon_prefs.devtool_console_toggle:
         bpy.types.CONSOLE_HT_header.append(devtool_console)
     # in menu -> CONSOLE_MT_editor_menus
 
+    addon_listing.register()
+
 def unregister():
     if bpy.app.background:
         return
+
+    addon_listing.unregister()
 
     bpy.types.CONSOLE_HT_header.remove(devtool_console)
     del bpy.types.Scene.enum_DebugPrint
