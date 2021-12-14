@@ -1,8 +1,8 @@
-# devTools
-Blender addon - add development tools to blender text editor
+# DevTools
+
+Blender addon - Add development tools to blender text editor
   
-**[Download latest](https://github.com/Pullusb/devTools/archive/master.zip)** (left click)
-<!-- **[Download latest](https://raw.githubusercontent.com/Pullusb/devTools/master/SB_devTools.py)** (right click, save Target as) -->
+**[Download latest](https://github.com/Pullusb/devTools/archive/master.zip)**
 
 For old blender 2.7 version go [here](https://github.com/Pullusb/SB_blender_addons_old_2_7)
 
@@ -12,7 +12,9 @@ For old blender 2.7 version go [here](https://github.com/Pullusb/SB_blender_addo
 
 ### Description
 
-#### Add buttons to text-editor toolbar:
+#### Text operators
+
+> Text editor > Sidebar > Dev Tools
 
 Helpers for your current script:
 
@@ -46,18 +48,34 @@ Modal:
 
 - **Event Keycode printer** - Modal to capture event and print event.type and event.value. Serve as quick way to know keycode to use for keymap or modals
 
-#### Add button to interactive console header
+#### Addon listing with batch operation
+
+> Text editor > Sidebar > Addon List
+
+Display a filterable and selectable list of all addon listed by blender:
+
+- Button to open addon location (:file_folder:)
+- Additional action with modifier+clic on folder button:
+  - Ctrl + clic: copy path
+  - Alt + clic: module name
+- Filers to show module name and version (Search bar right buttons)
+
+Actions:
+
+- **Open Active Prefs** - Open addon pref of active (highlighted) line 
+- **Export Addon Pack As Zip** - Export selected addons in a zip pack with include/exclude filters
+- **Print Selected Infos** - Just print some infos in console
+- **Batch Disable addons** - Disable all selected addons
+
+#### Actions for interactive console:
+
+> Interactive Console > Header bar
 
 - **Access clicked Area** - click in any area to write in console the path to it (in current layout). e.g: `bpy.context.screen.areas[5]`
 
 - **Context override** - click in any area to write context override variable line (in current layout)
 
-<!-- #### Add button to expanded addon preferences
-
-- -->
-
-
-#### Add text-editor shorctut:
+#### Text-editor shorctut:
 
 - `Ctrl+Shift+I` : add a quick import/classic module statement at cursor
 - `Ctrl+P` : add _print(*selection*)_
