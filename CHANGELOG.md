@@ -1,5 +1,10 @@
 # Changelog
 
+
+1.8.1 - 2021-12-17
+
+- change: addon list search now not case sensitive for easier finding
+
 1.8.0 - 2021-12-12
 
 - feat: Selectable addon list in text-editor Dev tab with multiple view mode and filtering

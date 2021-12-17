@@ -178,7 +178,7 @@ class DEV_UL_addon_list(UIList):
         flt_flags = []
         flt_neworder = []
         if self.filter_name:
-            flt_flags = helper_funcs.filter_items_by_name(self.filter_name, self.bitflag_filter_item, collec, "name",
+            flt_flags = helper_funcs.filter_items_by_name(self.filter_name.lower(), self.bitflag_filter_item, collec, "name",
                                                           reverse=self.use_filter_sort_reverse)#self.use_filter_name_reverse)
         return flt_flags, flt_neworder
 
