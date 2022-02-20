@@ -2,7 +2,7 @@ bl_info = {
     "name": "dev tools",
     "description": "Add tools in text editor and console to help development",
     "author": "Samuel Bernou",
-    "version": (1, 8, 1),
+    "version": (1, 9, 0),
     "blender": (2, 83, 0),
     "location": "Text editor > toolbar and console header",
     "warning": "",
@@ -20,6 +20,8 @@ from time import strftime
 from pathlib import Path
 
 from . import addon_listing
+from . import api_explore
+from . import console_ops
 from . import fn
 
 ###---UTILITY funcs
@@ -134,7 +136,7 @@ def update_enum_DebugPrint(self, context):
 
 class DEV_OT_simplePrint(bpy.types.Operator):
     bl_idname = "devtools.simple_print"
-    bl_label = "Simple print text"
+    bl_label = "Simple Print Text"
     bl_description = "Add a new line with debug print of selected text\n(replace clipboard)"
     bl_options = {"REGISTER"}
 
@@ -178,7 +180,7 @@ class DEV_OT_simplePrint(bpy.types.Operator):
 
 class DEV_OT_quote(bpy.types.Operator):
     bl_idname = "devtools.quote"
-    bl_label = "quote text"
+    bl_label = "Quote Text"
     bl_description = "quote text"
     bl_options = {"REGISTER"}
 
@@ -217,7 +219,7 @@ class DEV_OT_quote(bpy.types.Operator):
 
 class DEV_OT_insert_import(bpy.types.Operator):
     bl_idname = "devtools.insert_import"
-    bl_label = "insert import text"
+    bl_label = "Insert Import Text"
     bl_description = "import text"
     bl_options = {"REGISTER"}
 
@@ -297,7 +299,7 @@ class DEV_OT_debugPrintVariable(bpy.types.Operator):
 
 class DEV_OT_deleteAllDebugPrint(bpy.types.Operator):
     bl_idname = "devtools.delete_all_debug_print"
-    bl_label = "Delete all debug print"
+    bl_label = "Delete All Debug Print"
     bl_description = "Delete all debug print"
     bl_options = {"REGISTER"}
     
@@ -317,7 +319,7 @@ class DEV_OT_deleteAllDebugPrint(bpy.types.Operator):
 
 class DEV_OT_disableAllDebugPrint(bpy.types.Operator):
     bl_idname = "devtools.disable_all_debug_print"
-    bl_label = "Disable all debug print"
+    bl_label = "Disable All Debug Print"
     bl_description = "comment all lines finishing with '#Dbg'"
     bl_options = {"REGISTER"}
 
@@ -346,7 +348,7 @@ class DEV_OT_disableAllDebugPrint(bpy.types.Operator):
 
 class DEV_OT_enableAllDebugPrint(bpy.types.Operator):
     bl_idname = "devtools.enable_all_debug_print"
-    bl_label = "Enable all debug print"
+    bl_label = "Enable All Debug Print"
     bl_description = "uncomment all lines finishing wih '#Dbg'"
     bl_options = {"REGISTER"}
 
@@ -375,7 +377,7 @@ class DEV_OT_enableAllDebugPrint(bpy.types.Operator):
 
 class DEV_OT_timeSelection(bpy.types.Operator):
     bl_idname = "devtools.time_selection"
-    bl_label = "Time selected code"
+    bl_label = "Time Selected Code"
     bl_description = "add time prints around selection\n add import if necessary" 
     bl_options = {"REGISTER"}
 
@@ -460,7 +462,7 @@ class DEV_OT_timeSelection(bpy.types.Operator):
 
 class DEV_OT_expandShortcutName(bpy.types.Operator):
     bl_idname = "devtools.expand_shortcut_name"
-    bl_label = "Expand text shortcuts"
+    bl_label = "Expand Text Shortcuts"
     bl_description = "replace 'C.etc' by 'bpy.context.etc'\n and 'D.etc' by 'bpy.data.etc'"
     bl_options = {"REGISTER"}
 
@@ -481,7 +483,7 @@ class DEV_OT_expandShortcutName(bpy.types.Operator):
 
 class DEV_OT_updateDebugLinum(bpy.types.Operator):
     bl_idname = "devtools.update_debug_linum"
-    bl_label = "Update_debug linum"
+    bl_label = "Update_Debug Linum"
     bl_description = "update number in debug prints that are using linum print"
     bl_options = {"REGISTER"}
 
@@ -516,7 +518,7 @@ class DEV_OT_updateDebugLinum(bpy.types.Operator):
 
 class DEV_OT_writeClassesTuple(bpy.types.Operator):
     bl_idname = "devtools.write_classes_tuple"
-    bl_label = "Write classes tuple"
+    bl_label = "Write Classes Tuple"
     bl_description = "Write a classes tuple containing all class in text"
     bl_options = {"REGISTER"}
 
@@ -539,7 +541,7 @@ class DEV_OT_writeClassesTuple(bpy.types.Operator):
 
 class DEV_OT_textDiff(bpy.types.Operator):
     bl_idname = "devtools.diff_internal_external"
-    bl_label = "Text diff external"
+    bl_label = "Text Diff External"
     bl_description = "print dif in console with the difference between current internal file and external saved version"
     bl_options = {"REGISTER"}
 
@@ -586,7 +588,7 @@ class DEV_OT_textDiff(bpy.types.Operator):
 
 class DEV_OT_openExternalEditor(bpy.types.Operator):
     bl_idname = "devtools.open_in_default_editor"
-    bl_label = "Open externally"
+    bl_label = "Open Externally"
     bl_description = "Open in external default program or software specified in addon preferences"
     bl_options = {"REGISTER"}
 
@@ -597,11 +599,12 @@ class DEV_OT_openExternalEditor(bpy.types.Operator):
     def execute(self, context):
         text, _override = get_text(context)
         if text.filepath: # condition only if call from search (ui button masked if no external data)
-            ret = fn.openFile(text.filepath)
+            fp = Path(text.filepath).resolve().as_posix()
+            ret = fn.openFile(fp) # resolve links
             if 'CANCELLED' in ret:
-                mess = f'! Could not open: {text.filepath}'
+                mess = f'! Could not open: {fp}'
             else:
-                mess = f'Opened: {text.filepath}'
+                mess = f'Opened: {fp}'
         else:
             mess = 'Text is internal only'
 
@@ -611,7 +614,7 @@ class DEV_OT_openExternalEditor(bpy.types.Operator):
 
 class DEV_OT_openScriptFolder(bpy.types.Operator):
     bl_idname = "devtools.open_script_folder"
-    bl_label = "Open folder"
+    bl_label = "Open Folder"
     bl_description = "Open text folder in OS browser"
     bl_options = {"REGISTER"}
 
@@ -632,7 +635,7 @@ class DEV_OT_openScriptFolder(bpy.types.Operator):
 
 class DEV_OT_printResourcesPaths(bpy.types.Operator):
     bl_idname = "devtools.print_resources_path"
-    bl_label = "print ressources filepath"
+    bl_label = "Print Ressources Filepath"
     bl_description = "Print usefull resources filepath in console"
     bl_options = {"REGISTER"}
 
@@ -667,7 +670,7 @@ class DEV_OT_printResourcesPaths(bpy.types.Operator):
 
 class DEV_OT_openFilepath(bpy.types.Operator):
     bl_idname = "devtools.open_filepath"
-    bl_label = "Open folder at given filepath"
+    bl_label = "Open Folder At Given Filepath"
     bl_description = "Open given filepath in OS browser"
     bl_options = {"REGISTER"}
 
@@ -695,7 +698,7 @@ class DEV_OT_openFilepath(bpy.types.Operator):
 
 class DEV_OT_insertDate(bpy.types.Operator):
     bl_idname = "devtools.insert_date"
-    bl_label = "Insert date string"
+    bl_label = "Insert Date String"
     bl_description = "Insert date at current position (reclick to add details)"
     bl_options = {"REGISTER"}
 
@@ -731,7 +734,7 @@ class DEV_OT_insertDate(bpy.types.Operator):
 
 class DEV_OT_blenderInfo(bpy.types.Operator):
     bl_idname = "devtools.blender_info"
-    bl_label = "Blender infos"
+    bl_label = "Blender Infos"
     bl_description = "Insert blender release info (Date, Hash, branch).\nUsefull for bug report"
     bl_options = {"REGISTER"}
 
@@ -778,7 +781,7 @@ class DEV_OT_blenderInfo(bpy.types.Operator):
 
 class DEV_OT_key_printer(bpy.types.Operator):
     bl_idname = "devtools.keypress_tester"
-    bl_label = "key event tester"
+    bl_label = "Key Event Tester"
     bl_description = "Any key event name will be printed in console (press ESC to stop modal)\nCtrl + Click: copy name to clipboard "
     bl_options = {"REGISTER", "UNDO"}
 
@@ -824,7 +827,7 @@ class DEV_OT_key_printer(bpy.types.Operator):
 
 class DEV_OT_console_context_area_access(bpy.types.Operator):
     bl_idname = "devtools.console_context_area_access"
-    bl_label = "Access clicked area"
+    bl_label = "Access Clicked Area"
     bl_description = "Launch then clic in any area to write access to it in console (with current layout)\nshift+clic on area to copy to clipboard"
     bl_options = {"REGISTER"}
 
@@ -871,7 +874,7 @@ class DEV_OT_console_context_area_access(bpy.types.Operator):
 
 class DEV_OT_create_context_override(bpy.types.Operator):
     bl_idname = "devtools.create_context_override"
-    bl_label = "Context override"
+    bl_label = "Context Override"
     bl_description = "Create a context override function for text editor (quick inline in console) in related to clicked area\n(shift+clic to insert in clipboard)"
     bl_options = {"REGISTER", "INTERNAL"}
 
@@ -927,7 +930,7 @@ class DEV_OT_create_context_override(bpy.types.Operator):
 
 class DEV_OT_backupPref(bpy.types.Operator):
     bl_idname = "devtools.backup_prefs"
-    bl_label = "Backup user preferences"
+    bl_label = "Backup User Preferences"
     bl_description = "Backup user preferences in a subfolder of user config (also backup startup file)\nOpen folder after backup"
     bl_options = {"REGISTER"}
 
@@ -1010,33 +1013,39 @@ class DEV_PT_devTools(bpy.types.Panel):
         layout.prop(context.scene, 'enum_DebugPrint', text='', expand=False)
         layout.separator()
 
-        layout.operator(DEV_OT_timeSelection.bl_idname)
-        layout.operator(DEV_OT_writeClassesTuple.bl_idname)
-        layout.operator(DEV_OT_expandShortcutName.bl_idname)
-        layout.operator("devtools.create_context_override")
+
+        col = layout.column(align=False)
+        col.operator(DEV_OT_timeSelection.bl_idname)
+        col.operator(DEV_OT_writeClassesTuple.bl_idname)
+        col.operator(DEV_OT_expandShortcutName.bl_idname)
+        col.operator("devtools.create_context_override")
 
         #When text is saved externally draw more option
         text, _override = get_text(context)
         if text and text.filepath :#mask button if file is pure internal
-            layout.separator()
-            layout.operator(DEV_OT_textDiff.bl_idname)
-            layout.operator(DEV_OT_openScriptFolder.bl_idname)
-            layout.operator(DEV_OT_openExternalEditor.bl_idname)
+            col.separator()
+            col = layout.column(align=False)
+            col.label(text='External File')
+            col.operator(DEV_OT_textDiff.bl_idname)
+            col.operator(DEV_OT_openScriptFolder.bl_idname)
+            col.operator(DEV_OT_openExternalEditor.bl_idname)
 
-        layout.label(text='open scripts places')
-        row = layout.row()
+        col = layout.column(align=True)
+        col.separator()
+        col.label(text='Open Scripts Locations')
+        row = col.row(align=True)
         #local default installed addons (release)
         row.operator(DEV_OT_openFilepath.bl_idname, text='Built-in addons').fp = os.path.join(bpy.utils.resource_path('LOCAL') , 'scripts', 'addons')
 
         #Local user addon source (usually appdata roaming)\nWhere it goes when you do an 'install from file'
         row.operator(DEV_OT_openFilepath.bl_idname, text='Users addons').fp = str(Path(bpy.utils.user_resource('SCRIPTS')) / "addons")
 
-        layout = self.layout
+        #layout = self.layout
         #common script (if specified)
         preferences = bpy.context.preferences
         external_script_dir = preferences.filepaths.script_directory
         if external_script_dir and len(external_script_dir) > 2:
-            layout.operator(DEV_OT_openFilepath.bl_idname, text='External scripts folder').fp = str(Path(external_script_dir))
+            col.operator(DEV_OT_openFilepath.bl_idname, text='External scripts folder').fp = str(Path(external_script_dir))
 
         ## standard operator
         #layout.operator("wm.path_open", text='Open config location').filepath = bpy.utils.user_resource('CONFIG')
@@ -1045,36 +1054,24 @@ class DEV_PT_devTools(bpy.types.Panel):
         ##layout.operator(DEV_OT_backupPref.bl_idname, text='backup user prefs')# in addon prefs
 
         layout.separator()
+        col = layout.column(align=False)
+
         #path printer
-        layout.operator(DEV_OT_printResourcesPaths.bl_idname)
+        col.operator(DEV_OT_printResourcesPaths.bl_idname)
 
         #infos printer
-        row = layout.row()
+        row = col.row(align=True)
         row.operator(DEV_OT_insertDate.bl_idname, text='Insert date')
         row.operator(DEV_OT_blenderInfo.bl_idname, text='Release infos')
-        layout.separator()
-        layout.operator('devtools.keypress_tester',)
+        col.separator()
+        col.operator('devtools.keypress_tester',)
 
-
-###---FUNC PANEL
-
-def devtool_console(self, context):
-    layout = self.layout
-    layout.operator('devtools.console_context_area_access')
-    layout.operator("devtools.create_context_override")
+        #Api explore
+        col.separator()
+        col.operator('dev.api_search', text='Explore Api', icon='FILE_TEXT')
 
 
 ###---PREF PANEL
-
-def update_devtool_console_toggle(self,context):
-
-    addon_prefs = fn.get_addon_prefs()
-
-    if addon_prefs.devtool_console_toggle:
-        bpy.types.CONSOLE_HT_header.append(devtool_console)
-    else:
-        bpy.types.CONSOLE_HT_header.remove(devtool_console)
-        
 
 class DEV_PT_tools_addon_pref(bpy.types.AddonPreferences):
     bl_idname = __name__
@@ -1082,12 +1079,6 @@ class DEV_PT_tools_addon_pref(bpy.types.AddonPreferences):
     external_editor: bpy.props.StringProperty(
             name="External Editor",
             subtype='FILE_PATH',
-            )
-
-    devtool_console_toggle: bpy.props.BoolProperty(
-            name="Console: get clicked area",
-            default=True,
-            update=update_devtool_console_toggle
             )
 
     # copy_pressed_keys : bpy.props.BoolProperty(
@@ -1106,7 +1097,6 @@ class DEV_PT_tools_addon_pref(bpy.types.AddonPreferences):
 
         layout.operator("devtools.backup_prefs", text='Backup user prefs and startup files')
 
-        layout.prop(self, "devtool_console_toggle")
         layout.separator()
 
         layout.prop(self, "external_editor")
@@ -1121,8 +1111,6 @@ class DEV_PT_tools_addon_pref(bpy.types.AddonPreferences):
         col.label(text='Ctrl+Shift+I : classic import modules insertion   |  Ctrl+P : print(selection) insertion')
         col.label(text='Ctrl+Alt+P : print("selection") insertion   |  Ctrl+Shift+P : print debug variable insertion')
         col.label(text='Ctrl+L : Quote selection (with automatic quote or double quote choice)')
-
-
 
 
 ###---KEYMAP
@@ -1187,6 +1175,8 @@ def register():
     if bpy.app.background:
         return
 
+
+    api_explore.register()
     for cls in classes:
         bpy.utils.register_class(cls)
         
@@ -1211,10 +1201,8 @@ def register():
             update=update_enum_DebugPrint
         )
 
-    addon_prefs = fn.get_addon_prefs()
-    if addon_prefs.devtool_console_toggle:
-        bpy.types.CONSOLE_HT_header.append(devtool_console)
-    # in menu -> CONSOLE_MT_editor_menus
+    console_ops.register()
+    
 
     addon_listing.register()
 
@@ -1223,8 +1211,10 @@ def unregister():
         return
 
     addon_listing.unregister()
+    api_explore.unregister()
 
-    bpy.types.CONSOLE_HT_header.remove(devtool_console)
+    console_ops.unregister()
+    
     del bpy.types.Scene.enum_DebugPrint
     
     unregister_keymaps()

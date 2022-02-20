@@ -479,8 +479,15 @@ class DEV_OT_open_addon_prefs(Operator):
     # name : StringProperty(options={'SKIP_SAVE'})
     # module : StringProperty(options={'SKIP_SAVE'})
 
+    @classmethod
+    def poll(cls, context):
+        return context.scene.devpack_props.addon_list
+
     def execute(self, context):
         pr = context.scene.devpack_props
+        # if not len(pr.addon_list):
+        #     self.report({'ERROR'}, 'No items')
+        #     return {'CANCELLED'}
         ad = pr.addon_list[pr.idx]
         open_addon_prefs_by_name(name=ad.name, module=ad.addon_module)
         return {'FINISHED'}

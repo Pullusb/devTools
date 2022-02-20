@@ -1,6 +1,13 @@
 # Changelog
 
 
+1.9.0 - 2022-02-20
+
+- added: Api explorer button at the bottom of dev tool text editor panel.
+- removed: checkbox in preference to hide console dev tools header
+- changed: `open script externally` now resolve links to get to file instead of error
+- ui: small changes
+
 1.8.1 - 2021-12-17
 
 - change: addon list search now not case sensitive for easier finding

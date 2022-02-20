@@ -1,7 +1,7 @@
 import bpy
 from sys import platform
 import subprocess
-from os.path import isfile, dirname, normpath
+from os.path import isfile, dirname, normpath, exists
 from shutil import which
 
 
@@ -28,9 +28,12 @@ def openFile(filepath):
 
     if not filepath:
         return('No file path !')
+    
+    if not exists(filepath):
+        return(f'Not exists: {filepath}')
 
     if editor:
-        cmd = editor
+        cmd = editor.strip()
     else:
         myOS = platform
         if myOS.startswith('linux') or myOS.startswith('freebsd'):# linux
@@ -41,16 +44,20 @@ def openFile(filepath):
             cmd = 'open'
 
     mess = cmd + ' ' + filepath
-    fullcmd = [cmd,filepath]
+    fullcmd = [cmd, filepath]
 
     print('Command :', fullcmd)
 
     try:
-        subprocess.Popen(fullcmd)
+        # subprocess.Popen(fullcmd)
+        subprocess.call(fullcmd, shell=True)
+    
     except:
+        print('--/traceback--')
         import traceback
         traceback.print_exc()
-        mess = 'Text editor not found ' + mess
+        print('--traceback/--')
+        # mess = 'Text editor not found ' + mess
         return {'CANCELLED'}
 
     return mess
