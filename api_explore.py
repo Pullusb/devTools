@@ -59,16 +59,16 @@ class DEV_OT_api_search(bpy.types.Operator):
                         if type(value) in ( type(0), type(0.0), type(True), type('str'), type(mathutils.Vector()), type(mathutils.Color()), type(mathutils.Matrix()) ):
                             if search_mode:
                                 if self.search in attr:
-                                    self.found.append(f'{path}.{attr} = {value}')
+                                    self.found.append(f'{path}.{attr} : {value}')
                                     print(ct*'  ' + attr, value)
                             else:
-                                self.found.append(ct*'  ' + attr + str(value))
+                                self.found.append(ct*'  ' + f'{attr} : {value}')
                                 
                         else:
                             if not search_mode:
-                                self.found.append(ct*'  ' + f'{attr} {str(value)} {type(value)}')
-                            # recursion
+                                self.found.append(ct*'  ' + f'{attr} : {value} (type: {type(value)})')
                             ct+=1
+                            # recursion
                             self.list_attr('%s.%s'%(path,attr), ct, search_mode=search_mode)
 
     def execute(self, context):

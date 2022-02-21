@@ -1,5 +1,8 @@
 # Changelog
 
+1.9.1 - 2022-02-21
+
+- fix: Api explorer line format
 
 1.9.0 - 2022-02-20
 

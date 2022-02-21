@@ -2,7 +2,7 @@ bl_info = {
     "name": "dev tools",
     "description": "Add tools in text editor and console to help development",
     "author": "Samuel Bernou",
-    "version": (1, 9, 0),
+    "version": (1, 9, 1),
     "blender": (2, 83, 0),
     "location": "Text editor > toolbar and console header",
     "warning": "",
