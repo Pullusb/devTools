@@ -1,0 +1,11 @@
+import bpy
+import os, subprocess
+import re, fnmatch, glob
+from pathlib import Path
+from os.path import join, dirname, basename, exists, isfile, isdir, splitext
+from mathutils import Vector, Matrix
+from math import radians, degrees
+
+C = bpy.context
+D = bpy.data
+scn = bpy.context.scene

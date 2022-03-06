@@ -2,7 +2,7 @@ bl_info = {
     "name": "dev tools",
     "description": "Add tools in text editor and console to help development",
     "author": "Samuel Bernou",
-    "version": (1, 9, 1),
+    "version": (1, 9, 2),
     "blender": (2, 83, 0),
     "location": "Text editor > toolbar and console header",
     "warning": "",
@@ -236,12 +236,17 @@ class DEV_OT_insert_import(bpy.types.Operator):
             text, override = get_text(context)#reget_override
         charPos = text.current_character
         #clip = copySelected()
-        #TODO put the import in external file for user customisation
-        import_text = "import bpy\nimport os\nfrom os import listdir\nfrom os.path import join, dirname, basename, exists, isfile, isdir, splitext\nfrom pathlib import Path\nimport re, fnmatch, glob\nfrom mathutils import Vector, Matrix\nfrom math import radians, degrees\nC = bpy.context\nD = bpy.data\nscene = C.scene\n"
+        header_file = Path(__file__).with_name('imports.txt')
+        if not header_file.exists():
+            self.report({'ERROR'}, f'imports.txt not found in addon folder! path used : {header_file}')
+            return {"CANCELLED"}
+        
+        import_text = header_file.read_text()
 
         bpy.ops.text.insert(override, text=import_text)
 
-        ### Toggling coding space data basic feature #TODO (add box in pref to choose basic behavior)
+        ### Toggling coding space data basic feature
+        # TODO (add box in pref to choose basic behavior)
         context.space_data.show_line_numbers = True
         context.space_data.show_syntax_highlight = True
         #context.space_data.show_line_highlight = True
@@ -1020,9 +1025,9 @@ class DEV_PT_devTools(bpy.types.Panel):
         col.operator(DEV_OT_expandShortcutName.bl_idname)
         col.operator("devtools.create_context_override")
 
-        #When text is saved externally draw more option
+        # When text is saved externally draw more option
         text, _override = get_text(context)
-        if text and text.filepath :#mask button if file is pure internal
+        if text and text.filepath :# mask button if file is pure internal
             col.separator()
             col = layout.column(align=False)
             col.label(text='External File')
@@ -1034,39 +1039,39 @@ class DEV_PT_devTools(bpy.types.Panel):
         col.separator()
         col.label(text='Open Scripts Locations')
         row = col.row(align=True)
-        #local default installed addons (release)
+        # local default installed addons (release)
         row.operator(DEV_OT_openFilepath.bl_idname, text='Built-in addons').fp = os.path.join(bpy.utils.resource_path('LOCAL') , 'scripts', 'addons')
 
-        #Local user addon source (usually appdata roaming)\nWhere it goes when you do an 'install from file'
+        # Local user addon source (usually appdata roaming)\nWhere it goes when you do an 'install from file'
         row.operator(DEV_OT_openFilepath.bl_idname, text='Users addons').fp = str(Path(bpy.utils.user_resource('SCRIPTS')) / "addons")
 
-        #layout = self.layout
-        #common script (if specified)
+        # layout = self.layout
+        # common script (if specified)
         preferences = bpy.context.preferences
         external_script_dir = preferences.filepaths.script_directory
         if external_script_dir and len(external_script_dir) > 2:
             col.operator(DEV_OT_openFilepath.bl_idname, text='External scripts folder').fp = str(Path(external_script_dir))
 
-        ## standard operator
-        #layout.operator("wm.path_open", text='Open config location').filepath = bpy.utils.user_resource('CONFIG')
+        ##  standard operator
+        # layout.operator("wm.path_open", text='Open config location').filepath = bpy.utils.user_resource('CONFIG')
         layout.operator(DEV_OT_openFilepath.bl_idname, text='Config folder').fp = str(Path(bpy.utils.user_resource('CONFIG')))
         
-        ##layout.operator(DEV_OT_backupPref.bl_idname, text='backup user prefs')# in addon prefs
+        ##  layout.operator(DEV_OT_backupPref.bl_idname, text='backup user prefs')#  in addon prefs
 
         layout.separator()
         col = layout.column(align=False)
 
-        #path printer
+        # path printer
         col.operator(DEV_OT_printResourcesPaths.bl_idname)
 
-        #infos printer
+        # infos printer
         row = col.row(align=True)
         row.operator(DEV_OT_insertDate.bl_idname, text='Insert date')
         row.operator(DEV_OT_blenderInfo.bl_idname, text='Release infos')
         col.separator()
         col.operator('devtools.keypress_tester',)
 
-        #Api explore
+        # Api explore
         col.separator()
         col.operator('dev.api_search', text='Explore Api', icon='FILE_TEXT')
 
@@ -1103,6 +1108,9 @@ class DEV_PT_tools_addon_pref(bpy.types.AddonPreferences):
         col = layout.column()
         col.label(text="Option for addon packing zip:")
         col.prop(self, "devtool_addonpack_exclude")
+        
+        layout.separator()
+        layout.operator("wm.path_open", text='Edit text editor quick modules imports (ctrl + shift + i)').filepath = str(Path(__file__).with_name('imports.txt'))
         # layout.separator()
 
         box = layout.box()

@@ -1,5 +1,12 @@
 # Changelog
 
+
+1.9.2 - 2022-03-06
+
+- Changed: quick imports exists a separated `imports.txt` file in addon folder
+  - easy user customisation
+  - ui: added button in addon preferences to open file in default text editor
+
 1.9.1 - 2022-02-21
 
 - fix: Api explorer line format
