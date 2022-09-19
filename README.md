@@ -10,6 +10,13 @@ For old blender 2.7 version go [here](https://github.com/Pullusb/SB_blender_addo
 
 ---
 
+<!-- TODO 
+keymap code generator
+separate key event tester and keymap generator in a separate file
+
+find a way to align left in history explore
+-->
+
 ### Description
 
 #### Text operators
@@ -40,7 +47,7 @@ Opening addons places on disk:
 
 Inserting / printing infos about blender:
 
-- **Print usefull resources path** - Print in console all paths relative to addons location, config path and more
+- **Print usefull resources path** - Print in console and add to current text all paths relative to addons location, config path and more
 - **Insert date** - Insert current date at cursor position. re-click add hour. re-re-click add abbreviated day
 - **Release infos** - Insert blender release info (Date, Hash, branch), Usefull for bug report (print full build info in console)
 
@@ -71,9 +78,14 @@ Actions:
 
 > Interactive Console > Header bar
 
-- **Access clicked Area** - click in any area to write in console the path to it (in current layout). e.g: `bpy.context.screen.areas[5]`
+- **Select Area** - click in any area to write in console the path to it (in current layout). e.g: `bpy.context.screen.areas[5]`
 
 - **Context override** - click in any area to write context override variable line (in current layout)
+
+`Ctrl + F` - search word in API within the scope of datapath already typed in console
+
+`Ctrl + H` - pop up a history of console lines. select some and press enter to add then to clipboard
+
 
 #### Text-editor shorctut:
 

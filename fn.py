@@ -19,7 +19,7 @@ def copy_to_clipboard():
     clip = bpy.context.window_manager.clipboard
     return (clip)
 
-def openFile(filepath):
+def open_file(filepath):
     '''open the file at the path given with cmd relative to user's OS'''
     # preferences = bpy.context.preferences
     # addon_prefs = preferences.addons[__name__].preferences
@@ -133,3 +133,17 @@ def openFolder(folderpath):
     subprocess.Popen(fullcmd)
     return ' '.join(fullcmd)
 """
+
+
+def get_text(context):
+    '''get current text and override for text editor operator'''
+    text = getattr(bpy.context.space_data, "text", None)
+
+    #context override for the ops.text.insert() function
+    override = {'window': context.window,
+                'area'  : context.area,
+                'region': context.region,
+                'space': context.space_data,
+                'edit_text' : text
+                }
+    return(text, override)

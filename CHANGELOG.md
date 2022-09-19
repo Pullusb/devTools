@@ -1,6 +1,22 @@
 # Changelog
 
 
+2.0.0 - 2022-09-16
+
+- added: Console Operator to search in API at current console line
+  - access in `Dev` header Menu
+  - keymap: `Ctrl + F`
+- added: Console Operator to show a selectable history
+  - click on name to insert directly
+  - select multiple and click Ok to copy to clipboard
+  - in top list choose to add line breaks between selected block in clipboard
+  - access in `Dev` header Menu
+  - keymap: `Ctrl + H`
+- changed: cursor change using `Access clicked area modal` (renamed `Select Area`)
+- changed: `Print Ressources Filepath` prints in console as before and insert in textblock (create if needed)
+- ui: added GP template menu into a general Template
+- code: refactor, snake cases ops, file split
+
 1.9.2 - 2022-03-06
 
 - Changed: quick imports exists a separated `imports.txt` file in addon folder

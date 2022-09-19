@@ -6,6 +6,7 @@ exclude = (
 
 ## To avoid recursion/crash on direct object call (comment for API check on deeper props)
 'data', 'edges', 'faces', 'edge_keys', 'polygons', 'loops', 'face_maps', 'original',
+
 ##  Avoid some specific properties
 'CustomShelf', 'context'
 #'matrix_local', 'matrix_parent_inverse', 'matrix_basis','location','rotation_euler', 'rotation_quaternion', 'rotation_axis_angle', 'scale', 'translation',
@@ -27,6 +28,9 @@ class DEV_OT_api_search(bpy.types.Operator):
     search : bpy.props.StringProperty(name='Search',
     description='Word to search in api paths')
 
+    from_console : bpy.props.BoolProperty(name='From Console', default=False,
+    description='Pop a panel', options={'SKIP_SAVE'})
+
     def invoke(self, context, event):
         return context.window_manager.invoke_props_dialog(self)
     
@@ -34,13 +38,16 @@ class DEV_OT_api_search(bpy.types.Operator):
         layout = self.layout
         col = layout.column()
         row = col.row()
-        row.activate_init = True # place cursor in field so user can start taping right away
+        if not self.from_console:
+            row.activate_init = True # place cursor in field so user can start taping right away
         row.prop(self, 'data_path', text='Data Path')
         
         col.prop(self, 'dump_api_tree', text='Dump Api Tree To Clipboard')
         
         row = col.row()
         row.active = not self.dump_api_tree
+        if self.from_console:
+            row.activate_init = True # place cursor in field so user can start taping right away
         row.prop(self, 'search', text='Search')
 
     def list_attr(self, path, ct=0, search_mode=False):
@@ -81,21 +88,28 @@ class DEV_OT_api_search(bpy.types.Operator):
             self.report({'ERROR'}, 'no data path given')
             return {"CANCELLED"}
         
+        dt = dt.rstrip('. ')
         self.list_attr(dt, search_mode = not self.dump_api_tree)
         print ('\nDone')
         print('checked', len(self.runned))
 
         if self.dump_api_tree:
             context.window_manager.clipboard = '\n'.join(self.found)
-            # Write on a text data block
+            self.report({'INFO'}, f'Api elements copied to clipboard')
+            # and / or Write on a text data block ?
             return {"FINISHED"}
         
         if self.found:
-            self.report({'INFO'}, f'{len(self.found)} elements found, see console')
+            self.report({'INFO'}, f'{len(self.found)} elements copied, see console')
             for f in self.found:
                 print(f)
-            # Copy to clipboard
+            
             context.window_manager.clipboard = '\n'.join(self.found)
+            # if self.from_console:
+            #     pass # TODO: trigger a panel with insert choice result
+            # else:
+            #     # Copy to clipboard
+            #     context.window_manager.clipboard = '\n'.join(self.found)
         return {"FINISHED"}
 
 
