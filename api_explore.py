@@ -2,16 +2,17 @@ import bpy, mathutils
 
 exclude = (
 ### add lines here to exclude specific attribute
-'bl_rna', 'identifier','name_property','rna_type','properties', 'id_data'#basic
+'bl_rna', 'identifier','name_property','rna_type','properties', 'id_data', 'id_library',#basic
 
 ## To avoid recursion/crash on direct object call (comment for API check on deeper props)
 'data', 'edges', 'faces', 'edge_keys', 'polygons', 'loops', 'face_maps', 'original',
 
 ##  Avoid some specific properties
-'CustomShelf', 'context'
+'CustomShelf', 'context', 'libmv',
 #'matrix_local', 'matrix_parent_inverse', 'matrix_basis','location','rotation_euler', 'rotation_quaternion', 'rotation_axis_angle', 'scale', 'translation',
 )
 
+## starting with 'id_' ?
 
 class DEV_OT_api_search(bpy.types.Operator):
     bl_idname = "dev.api_search"

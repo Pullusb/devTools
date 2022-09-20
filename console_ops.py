@@ -124,7 +124,7 @@ class DEV_OT_console_api_search(bpy.types.Operator):
 
     def invoke(self, context, event):
         self.line = context.area.spaces.active.history[-1].body
-        self.line = self.line.strip().rstrip('.')
+        self.line = self.line.strip().rstrip('.').replace('C.', 'bpy.context.').replace('D.', 'bpy.data.')
         if not self.line:
             self.report({'ERROR'} , 'Empty line')
         return context.window_manager.invoke_props_dialog(self)
@@ -141,8 +141,7 @@ class DEV_OT_console_api_search(bpy.types.Operator):
         if not self.search:
             self.report({'ERROR'}, 'Need search term')
             return {"CANCELLED"}
-        
-        self.line = self.line.replace('C.', 'bpy.context.').replace('D.', 'bpy.data.')
+
         bpy.ops.dev.api_search(
             'EXEC_DEFAULT', # no need invoke if from console is used
             data_path=self.line,
@@ -298,11 +297,12 @@ class DEV_MT_console_dev(bpy.types.Menu):
 
         
         ## History
-        layout.operator("wm.call_panel", text="History").name = "DEV_PT_console_history_lines"
+        # layout.operator("wm.call_panel", text="History").name = "DEV_PT_console_history_lines" # old direct panel
+        layout.operator("dev.copy_console_history_select", text="Select History")
 
         ## close after insertion
         # ops = layout.operator("wm.call_panel", text="History")
-        # ops.name = "DEV_PT_console_history_lines"
+        # ops.name = "DEV_PT_console_history_lines" # old direct panel
         # ops.keep_open = False
 
 
