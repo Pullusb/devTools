@@ -1,6 +1,10 @@
 # Changelog
 
 
+2.0.2 - 2022-10-10
+
+- added: Operator `Open Error` to open last traceback file in editor (wip)
+
 2.0.0 - 2022-09-16
 
 - added: Console Operator to search in API at current console line
