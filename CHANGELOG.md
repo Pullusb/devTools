@@ -1,9 +1,15 @@
 # Changelog
 
+2.1.0 - 2022-10-11
+
+- added: `Open Traceback Errors`, search for `Error` in _Operator search_ or use help menu
+- added: `Open Errors From Clipboard`, roughly copy an error code containing filepath and line, then execute
+- added: Open Error can use internal text editor or external editor (note: formatting is made for code/codium)
+- added: two new "open error" ops in top bar `Help` menu
 
 2.0.2 - 2022-10-10
 
-- added: Operator `Open Error` to open last traceback file in editor (wip)
+- added: (wip) Operator `Open Error` to open last traceback
 
 2.0.0 - 2022-09-16
 

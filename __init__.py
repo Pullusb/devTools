@@ -2,7 +2,7 @@ bl_info = {
     "name": "dev tools",
     "description": "Add tools in text editor and console to help development",
     "author": "Samuel Bernou",
-    "version": (2, 0, 2),
+    "version": (2, 1, 0),
     "blender": (3, 0, 0),
     "location": "Text editor > toolbar and console header",
     "warning": "",
@@ -22,6 +22,7 @@ from pathlib import Path
 from . import fn
 from . import addon_listing
 from . import openers
+from . import error_handle
 from . import api_explore
 from . import console_ops
 from . import ui
@@ -994,6 +995,7 @@ def register():
         return
 
     openers.register()
+    error_handle.register()
     api_explore.register()
     for cls in classes:
         bpy.utils.register_class(cls)
@@ -1031,6 +1033,7 @@ def unregister():
     addon_listing.unregister()
     api_explore.unregister()
 
+    error_handle.unregister()
     console_ops.unregister()
     openers.unregister()
     

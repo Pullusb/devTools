@@ -1,6 +1,6 @@
 import bpy
-from sys import platform
 import subprocess
+from sys import platform
 from os.path import isfile, dirname, normpath, exists
 from shutil import which
 
@@ -147,3 +147,51 @@ def get_text(context):
                 'edit_text' : text
                 }
     return(text, override)
+
+def set_file_in_text_editor(filepath, linum=None, context=None):
+    context = context or bpy.context
+    print('context.area.type: ', context.area.type)
+    for t in [t for t in bpy.data.texts if t.filepath == filepath] :
+        bpy.data.texts.remove(t)
+
+    text = bpy.data.texts.load(filepath)
+
+    areas = []
+    text_editor = None
+    for area in context.screen.areas :
+        if area.type == 'TEXT_EDITOR' :
+            text_editor = area
+
+        else :
+            areas.append(area)
+    if not text_editor :
+        if context.area.type == 'TOPBAR':
+            ## Topbar can't be splitted
+            ## fallback to first 3d view found (usually the bigger area)
+            text_editor = next((area for area in context.screen.areas if area.type == 'VIEW_3D'), None)
+            if text_editor is None:
+                ## fallback to any area that is not topbar
+                text_editor = next((area for area in context.screen.areas if area.type != 'TOPBAR'), None)
+            with bpy.context.temp_override(area=text_editor):
+                bpy.ops.screen.area_split(direction = "VERTICAL")
+
+        else:
+            bpy.ops.screen.area_split(direction = "VERTICAL")
+
+        for area in context.screen.areas :
+            if area not in areas :
+                text_editor = area
+                text_editor.type = "TEXT_EDITOR"
+                text_editor.spaces[0].show_syntax_highlight = True
+                text_editor.spaces[0].show_word_wrap = True
+                text_editor.spaces[0].show_line_numbers = True
+                context_copy = context.copy()
+                context_copy['area'] = text_editor
+
+    text_editor.spaces[0].text = text
+    if linum:
+        text.cursor_set(linum-1)
+        ## this also force the scroll to jump where the caret is
+        ## owtherwise stay at the top of the document
+        with bpy.context.temp_override(area=text_editor):
+            bpy.ops.text.move(type='LINE_BEGIN')
