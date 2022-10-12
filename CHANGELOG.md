@@ -1,5 +1,9 @@
 # Changelog
 
+2.1.1 - 2022-10-12
+
+- fix: split editor choose the bigger area possible (without being completely folder, like timeline usually is)
+
 2.1.0 - 2022-10-11
 
 - added: `Open Traceback Errors`, search for `Error` in _Operator search_ or use help menu

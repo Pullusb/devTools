@@ -3,7 +3,7 @@ import subprocess
 from sys import platform
 from os.path import isfile, dirname, normpath, exists
 from shutil import which
-
+from math import sqrt
 
 def get_addon_prefs():
     import os
@@ -169,9 +169,14 @@ def set_file_in_text_editor(filepath, linum=None, context=None):
             ## Topbar can't be splitted
             ## fallback to first 3d view found (usually the bigger area)
             text_editor = next((area for area in context.screen.areas if area.type == 'VIEW_3D'), None)
+            
             if text_editor is None:
-                ## fallback to any area that is not topbar
-                text_editor = next((area for area in context.screen.areas if area.type != 'TOPBAR'), None)
+                ## fallback to any area big that is not topbar
+                # text_editor = next((area for area in context.screen.areas if area.type != 'TOPBAR'), None)
+                valid_area = [a for a in areas if a.type != 'TOPBAR' and a.width > 30 and a.height > 30]
+                valid_area.sort(key=lambda x: sqrt(x.width**2 + x.height**2)) # filter by diagonal
+                text_editor = valid_area[-1]
+        
             with bpy.context.temp_override(area=text_editor):
                 bpy.ops.screen.area_split(direction = "VERTICAL")
 
