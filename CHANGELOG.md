@@ -1,5 +1,9 @@
 # Changelog
 
+2.1.2 - 2022-10-13
+
+- added: _open error_ handle case where script is called from blend but saved externally
+
 2.1.1 - 2022-10-12
 
 - fix: split editor choose the bigger area possible (without being completely folder, like timeline usually is)

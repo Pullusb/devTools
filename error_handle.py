@@ -163,8 +163,32 @@ class DEV_OT_open_error_file(bpy.types.Operator):
             if not tb_list:
                 self.report({'ERROR'}, 'No last traceback found using "sys.last_traceback"')
                 return {"CANCELLED"}
+
+
+            ## TODO: Handle case when started from Blender and have a script
+ 
+            ## sometimes resolve() give a too long -not needed- url.
+            ## Always resolve with list comprehension
+            # self.error_list = [(str(Path(t.filename).resolve()), t.lineno, t.line, t.name) for t in tb_list]
+
+            always_resolve = False # Only resolve on symlink
+            for t in tb_list:
+                # if bpy.data.filepath and t.filename.startswith(bpy.data.filepath):
+
+                file_path = Path(t.filename)
+                current_blend = Path(bpy.data.filepath).name
                 
-            self.error_list = [(str(Path(t.filename).resolve()), t.lineno, t.line, t.name) for t in tb_list]
+                # Case when script executed from blend and is loaded externally
+                if file_path.parent.name == current_blend:
+                    txt = bpy.data.texts.get(file_path.name)
+                    if txt:
+                        if txt.filepath:
+                            file_path = Path(os.path.abspath(bpy.path.abspath(txt.filepath)))
+
+                if always_resolve or (file_path.exists() and file_path.is_symlink()):
+                    file_path = file_path.resolve() # resolve symlink
+
+                self.error_list.append((str(file_path), t.lineno, t.line, t.name))
 
             ## add error type and description
             error_type = str(sys.last_type)
