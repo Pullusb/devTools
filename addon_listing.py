@@ -40,8 +40,9 @@ def get_addon_location(fp) -> str:
 
     return 'other'
 
-def get_addons_modules_infos(active_filter="ALL", support_filter='ALL'):
-    '''Return a list of tuples ([0] diskpath, [1] bl_info name (with source if conflict), [2] Diskname)
+def get_addons_modules_infos(active_filter="ALL", support_filter='ALL', extra=False):
+    '''Return a list of tuples
+    ([0] diskpath, [1] bl_info name (with source if conflict), [2] Diskname, [3] support, [4] version)
     active_filter in (ALL, ACTIVE, INACTIVE)
     support_filter in (ALL, OFFICIAL, COMMUNITY, TESTING)
     '''
@@ -83,7 +84,11 @@ def get_addons_modules_infos(active_filter="ALL", support_filter='ALL'):
                 continue
 
         # [0] diskpath, [1] bl_info name, [2] Diskname, [3] Support, [4] version
-        addon_list.append((str(fp), n, diskname, support, version))
+        if extra:
+            addon_list.append((str(fp), n, diskname, support, version))
+        else:
+            addon_list.append((str(fp), n, diskname))
+
         # module (can access m.bl_info['version']...etc)
         module_list.append(m)
 
@@ -92,19 +97,17 @@ def get_addons_modules_infos(active_filter="ALL", support_filter='ALL'):
     namelist = [x[1] for x in addon_list]
     dup_index = list(set(i for i, x in enumerate(namelist) if namelist.count(x) > 1))
 
-    # add version and location name
+    # Add version and location name
     for idx in dup_index:
         loc = get_addon_location(addon_list[idx][0])
         version = str(module_list[idx].bl_info.get('version', '')).replace(" ", "").strip('()')
         # replace with new tuple
-        addon_list[idx] = (addon_list[idx][0], f'{addon_list[idx][1]} ({loc} {version})', addon_list[idx][2], addon_list[idx][3], version)    
+        if extra:
+            addon_list[idx] = (addon_list[idx][0], f'{addon_list[idx][1]} ({loc} {version})', addon_list[idx][2], addon_list[idx][3], version)
+        else:
+            addon_list[idx] = (addon_list[idx][0], f'{addon_list[idx][1]} ({loc} {version})', addon_list[idx][2])
 
     return addon_list
-
-# def get_addon_list(self, context):
-#     '''return (identifier, name, description) of enum content'''
-#     return get_addons_modules_infos() # self.all_addons_l
-#     # return [(i.path, basename(i.path), "") for i in self.blends]
 
 ## Manual reloading
 
@@ -115,7 +118,8 @@ def reload_addon_list(self, context):
     uilist.clear()
     pl_prop['idx'] = 0 # reset idx to zero
 
-    addon_tuples = get_addons_modules_infos(active_filter=pl_prop.filter_state, support_filter=pl_prop.filter_support)
+    ## Need extra to have support and version
+    addon_tuples = get_addons_modules_infos(active_filter=pl_prop.filter_state, support_filter=pl_prop.filter_support, extra=True)
     # [0] diskpath, [1] bl_info name, [2] Diskname, [3] Support
 
     for adn in addon_tuples: # populate list
@@ -158,7 +162,8 @@ class DEV_UL_addon_list(UIList):
             row.label(text=item.addon_module)
         if self.show_version:
             row.label(text=item.addon_version)
-        row.operator('dev.open_element_in_os', text='', icon='FILE_FOLDER').filepath = item.addon_path
+        # row.operator('dev.open_element_in_os', text='', icon='FILE_FOLDER').filepath = item.addon_path
+        # row.operator('dev.open_addon_in_code_editor', text='', icon='FILE_SCRIPT').filepath = item.addon_path
 
     def draw_filter(self, context, layout):
         row = layout.row()
@@ -260,17 +265,26 @@ class DEV_PT_addon_list_ui(Panel):
         # refresh button above in UIlist right side
         subcol = row.column(align=True)
         subcol.operator("dev.reload_addon_list", icon="FILE_REFRESH", text="")
+        subcol.separator()
         
+        pg = context.scene.devpack_props
+        if pg and pg.idx >= 0:
+            ad = pg.addon_list[pg.idx]
+            subcol.operator('dev.open_element_in_os', text='', icon='FILE_FOLDER').filepath = ad.addon_path
+            op = subcol.operator('dev.open_in_editor', text='', icon='FILE_SCRIPT')
+            op.filepath = ad.addon_path
+            op.use_folder = True
+
+            subcol.operator("dev.open_addon_prefs", icon="PREFERENCES", text="") # Open Active Prefs
+
         col.label(text=f'{len([a for a in pl_prop.addon_list if a.select])}/{len(pl_prop.addon_list)} Selected')
 
-        col.operator("dev.open_addon_prefs", icon="PREFERENCES", text="Open Active Prefs")
-        
-        col.separator()
         col.operator("dev.export_addon_zip_pack", icon="FILE_ARCHIVE", text="Export Addon Pack As Zip")
         col.operator("dev.print_addon_list", icon="CONSOLE", text="Print Selected Infos")
         
         ## problem with batch enable. internal targeted addons __name__ variable seem to be wrong when enabling from here
-        # col.operator("dev.toggle_marked_addons", icon="CHECKBOX_HLT", text="Batch Enable addons").enable = True
+        col = layout.column(align=True)
+        col.operator("dev.toggle_marked_addons", icon="CHECKBOX_HLT", text="Batch Enable addons").enable = True
         col.operator("dev.toggle_marked_addons", icon="CHECKBOX_DEHLT", text="Batch Disable addons").enable = False
 
 #--- ACTION OPS
@@ -447,10 +461,13 @@ class DEV_OT_toggle_marked_addons(Operator):
                 continue
             if self.enable:
                 print(f'Enabling {ad.name} -> {ad.addon_module}')
-                addon_utils.enable(ad.addon_module)
+                bpy.ops.preferences.addon_enable(module=ad.addon_module)
+                # addon_utils.enable(ad.addon_module)
+
             else:
                 print(f'Disabling {ad.name} -> {ad.addon_module}')
-                addon_utils.disable(ad.addon_module)
+                bpy.ops.preferences.addon_disable(module=ad.addon_module)
+                # addon_utils.disable(ad.addon_module)
 
         return {"FINISHED"}
 
@@ -492,12 +509,58 @@ class DEV_OT_open_addon_prefs(Operator):
         open_addon_prefs_by_name(name=ad.name, module=ad.addon_module)
         return {'FINISHED'}
 
+
+def get_addon_list(self, context):
+    '''return (identifier, name, description) of enum content'''
+    return get_addons_modules_infos() # self.all_addons_l
+    # return [(i.path, basename(i.path), "") for i in self.blends]
+
+## TODO : make open in editor from python command
+## (don't even need to remember name of source addon)
+
+class DEV_OT_open_addon_in_code_editor(Operator) :
+    bl_idname = "dev.open_addon_in_code_editor"
+    bl_label = "Open Addon In Editor"
+    bl_description = "Open chosen addon directory in code editor defined in addon prefs"
+    bl_options = {'REGISTER'}
+    # important to have the updated enum here as bl_property
+    bl_property = "addons_enum"
+
+    addons_enum : bpy.props.EnumProperty(
+        name="Addons",
+        description="Choose addon in list",
+        items=get_addon_list
+        )
+
+    # There is a known bug with using a callback,
+    # Python must keep a reference to the strings returned by the callback
+    # or Blender will misbehave or even crash.
+
+    # Need to have a variable to store (to get it in self)
+    addons : bpy.props.StringProperty(default='', options={'SKIP_SAVE'})
+
+    def invoke(self, context, event):
+        # all_addons_l = get_addons_modules_infos()
+        context.window_manager.invoke_search_popup(self)
+        return {'FINISHED'}
+
+    def execute(self, context):
+        chosen = self.addons_enum
+        if chosen.endswith('__init__.py'):
+            chosen=Path(chosen).parent.as_posix()
+        
+        self.report({'INFO'}, f'Open: {chosen}')
+        bpy.ops.dev.open_in_editor(filepath=chosen)
+        # fn.openFolder(chosen)
+        return {'FINISHED'}
+
 classes = (
 # action ops
 DEV_OT_toggle_marked_addons,
 DEV_OT_open_addon_prefs,
 DEV_OT_print_addon_list,
 DEV_OT_export_addon_zip_pack,
+DEV_OT_open_addon_in_code_editor,
 
 # addon list
 DEV_OT_reload_addon_list,

@@ -1,5 +1,14 @@
 # Changelog
 
+2.2.0 - 2022-10-15
+
+- added: `Open Addon In Editor` operator to call popup from F3 search.
+- added: Addons in Text editors Sidebar "Addon list" now have `open in editor` button
+- added: Searched operator `Open Editor From Python Command Copy` to call after `right click` >  `Copy Python Command`
+- changed: UI of "Addon list", individuals action on selection are now on the right side
+- changed: Using _open directory_ / _open in editor_ resolve path beforehand.
+- fixed: Batch Enable/Disable checked addons, now avalible in addon list
+
 2.1.2 - 2022-10-13
 
 - added: _open error_ handle case where script is called from blend but saved externally

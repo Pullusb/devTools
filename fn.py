@@ -1,5 +1,7 @@
 import bpy
 import subprocess
+from types import ModuleType
+from pathlib import Path
 from sys import platform
 from os.path import isfile, dirname, normpath, exists
 from shutil import which
@@ -50,7 +52,8 @@ def open_file(filepath):
 
     try:
         # subprocess.Popen(fullcmd)
-        subprocess.call(fullcmd, shell=True)
+        # subprocess.call(fullcmd, shell=True)
+        subprocess.call(fullcmd, shell=platform.startswith('win'))
     
     except:
         print('--/traceback--')
@@ -72,6 +75,8 @@ def open_folder(folderpath):
 
     from sys import platform
     import subprocess
+
+    ## resolve symlink
 
     myOS = platform
     if myOS.startswith(('linux','freebsd')):
@@ -105,6 +110,9 @@ def open_folder(folderpath):
         if not select:
             # Use directory of the file
             folderpath = dirname(folderpath)
+ 
+    ## Resolve potential symlink folder
+    folderpath = Path(folderpath).resolve().as_posix()
 
     folderpath = normpath(folderpath)
     fullcmd = cmd.split() + [folderpath]
@@ -200,3 +208,72 @@ def set_file_in_text_editor(filepath, linum=None, context=None):
         ## owtherwise stay at the top of the document
         with bpy.context.temp_override(area=text_editor):
             bpy.ops.text.move(type='LINE_BEGIN')
+
+## Get source addon from idname
+def get_module_path(mod):
+    str_path = str(mod).rsplit("'",1)[0].split("'")[-1]
+    return Path(str_path).parent.as_posix()
+    # if str_path.endswith('.__init__.py'):
+    #     return Path(str_path).parent.as_posix()
+    # else:
+    #     return Path(str_path).as_posix()
+
+exclude_mods = ('bpy', 'os', 'subprocess', 'shutil', 're', 'sys', 'math')
+
+def get_mod_classes(mod, classes=None, mod_path=None, depth=0):
+    if classes is None:
+        classes = []
+        mod_path = get_module_path(mod)
+    if depth > 2:
+        return
+    if not isinstance(mod, ModuleType):
+        return
+    if not get_module_path(mod).startswith(mod_path):
+        return
+    classes += list(getattr(mod, "classes", []))
+    for attr in dir(mod):
+        if not attr.startswith('__') and not attr in exclude_mods:
+            submod = getattr(mod, attr)
+            get_mod_classes(submod, classes=classes, mod_path=mod_path, depth=depth+1)
+    return classes
+
+def get_addon_from_python_command(op_name):
+    '''Get source addon from python command id_name
+    Return a tuple containing module name and path to file'''
+    import addon_utils
+    from bpy.types import Operator
+    from importlib import import_module
+    import inspect
+
+    op_name = op_name.strip()
+    if op_name.startswith('bpy.ops.'):
+        # op_name = op_name.replace('bpy.ops.', '').split('(')[0]
+        op_name = op_name.split('.', 2)[-1].split('(')[0]
+    # print("op_name", op_name)#Dbg
+    
+    for m in addon_utils.modules():
+        name = m.__name__
+        default, loaded = addon_utils.check(name)
+        if not loaded:
+            continue
+        mod = import_module(name)
+        classes = get_mod_classes(mod)
+        for c in classes:
+            # print(c)
+            # print(getattr(c, "bl_idname", ""))
+            if (
+                issubclass(c, Operator) 
+                and  
+                getattr(c, "bl_idname", "").startswith(op_name)
+                ):
+                print(name)
+                return name, str(m).rsplit("'",1)[0].split("'")[-1]
+ 
+        # for k in dir(mod):
+        #     print(k)
+        #     cls = getattr(mod, k, None)
+        #     if inspect.isclass(cls) and issubclass(cls, Operator):
+        #         id = getattr(cls, "bl_idname", "")
+        #         if id.startswith(op_name):
+        #             print(name)
+        #             return name, 

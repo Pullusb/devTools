@@ -2,7 +2,7 @@ bl_info = {
     "name": "dev tools",
     "description": "Add tools in text editor and console to help development",
     "author": "Samuel Bernou",
-    "version": (2, 1, 2),
+    "version": (2, 2, 0),
     "blender": (3, 0, 0),
     "location": "Text editor > toolbar and console header",
     "warning": "",
@@ -85,8 +85,12 @@ def copy_selected(context):
 def print_string_variable(clip,linum=''):
     if linum:
         line = 'print(":l {1}:{0}", {0})#Dbg'.format(clip, str(linum) )
+        ## f-string '=' syntax
+        # line = 'print(f":l {1}: {{{0}=}}")#Dbg'.format(clip, str(linum) )
     else:
         line = 'print("{0}", {0})#Dbg'.format(clip)
+        ## f-string '=' syntax
+        # line = 'print(f"{{{0}=}}")#Dbg'.format(clip)
     #'print("'+ clip + '", ' + clip + ')#Dbg'
     return (line)
 
