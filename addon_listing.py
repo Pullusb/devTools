@@ -268,7 +268,7 @@ class DEV_PT_addon_list_ui(Panel):
         subcol.separator()
         
         pg = context.scene.devpack_props
-        if pg and pg.idx >= 0:
+        if pg and len(pg.addon_list) and pg.idx >= 0:
             ad = pg.addon_list[pg.idx]
             subcol.operator('dev.open_element_in_os', text='', icon='FILE_FOLDER').filepath = ad.addon_path
             op = subcol.operator('dev.open_in_editor', text='', icon='FILE_SCRIPT')

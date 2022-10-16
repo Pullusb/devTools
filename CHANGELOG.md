@@ -1,5 +1,9 @@
 # Changelog
 
+2.2.1 - 2022-10-16
+
+- fixed: error when addon list is empty
+
 2.2.0 - 2022-10-15
 
 - added: `Open Addon In Editor` operator to call popup from F3 search.
