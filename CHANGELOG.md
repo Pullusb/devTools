@@ -1,5 +1,9 @@
 # Changelog
 
+2.2.2 - 2022-10-17
+
+- added: entry in button context menu to open source of right clicked operator
+
 2.2.1 - 2022-10-16
 
 - fixed: error when addon list is empty
