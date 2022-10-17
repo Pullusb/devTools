@@ -471,22 +471,6 @@ class DEV_OT_toggle_marked_addons(Operator):
 
         return {"FINISHED"}
 
-def open_addon_prefs_by_name(name='', module=''):
-    '''Open addon prefs windows with focus on current addon'''
-    if not name:
-        print('error: in open_addon_prefs_by_name : No name specified')
-        return
-    # from .__init__ import bl_info
-    wm = bpy.context.window_manager
-    wm.addon_filter = 'All'
-    if not 'COMMUNITY' in  wm.addon_support: # reactivate community
-        wm.addon_support = set([i for i in wm.addon_support] + ['COMMUNITY'])
-    wm.addon_search = name
-    bpy.context.preferences.active_section = 'ADDONS'
-    if module:
-        bpy.ops.preferences.addon_expand(module=module)
-    bpy.ops.screen.userpref_show('INVOKE_DEFAULT')
-
 class DEV_OT_open_addon_prefs(Operator):
     bl_idname = "dev.open_addon_prefs"
     bl_label = "Open Addon Prefs"
@@ -506,7 +490,7 @@ class DEV_OT_open_addon_prefs(Operator):
         #     self.report({'ERROR'}, 'No items')
         #     return {'CANCELLED'}
         ad = pr.addon_list[pr.idx]
-        open_addon_prefs_by_name(name=ad.name, module=ad.addon_module)
+        fn.open_addon_prefs_by_name(name=ad.name, module=ad.addon_module)
         return {'FINISHED'}
 
 

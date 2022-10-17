@@ -101,6 +101,21 @@ class DEV_OT_artificial_error(bpy.types.Operator):
         provoked_error = 2/0
         return {"FINISHED"}
 
+class DEV_OT_clear_last_traceback(bpy.types.Operator):
+    bl_idname = "devtools.clear_last_traceback"
+    bl_label = "Clear Last Traceback"
+    bl_description = "Clear last traceback infos (deleting sys.last_traceback, etc)"
+    bl_options = {"REGISTER", "INTERNAL"}
+
+    def execute(self, context):
+        if hasattr(sys, 'last_traceback') and sys.last_traceback is not None:
+            del sys.last_traceback
+        if hasattr(sys, 'last_value') and sys.last_value is not None:
+            del sys.last_value
+        if hasattr(sys, 'last_type') and sys.last_type is not None:
+            del sys.last_type
+        return {"FINISHED"}
+
 class DEV_OT_open_error_file(bpy.types.Operator):
     bl_idname = "devtools.open_error_file"
     bl_label = "Open Traceback Errors"
@@ -113,12 +128,14 @@ class DEV_OT_open_error_file(bpy.types.Operator):
 
     def invoke(self, context, event):
         if self.path_line:
-            print('self.path_line: ', self.path_line)
+            # print('self.path_line: ', self.path_line)#Dbg
             if self.use_external:
                 editor = fn.get_addon_prefs().external_editor
                 if not editor:
-                    self.report({'ERROR'}, 'external editor need to be specified in preferences')
+                    mess = fn.missing_external_editor()
+                    self.report({'WARNING'}, mess)
                     return {"CANCELLED"}
+
                 ## Use passed line direcly when recalling operator
                 cmd = [editor, '--goto', self.path_line]
                 print('cmd: ', cmd)
@@ -229,7 +246,11 @@ class DEV_OT_open_error_file(bpy.types.Operator):
             if len(item) > 2 and item[2]:
                 boxcol.label(text=item[2])
             col.separator()
-        
+
+        row = layout.row()
+        row.alignment = 'LEFT'
+        row.operator('devtools.clear_last_traceback', text='Clear Traceback', icon='CANCEL')
+
         if self.error_desc:
             for l in self.error_desc.split('\n'):
                 row = col.row()
@@ -240,6 +261,13 @@ class DEV_OT_open_error_file(bpy.types.Operator):
         if self.path_line:
             return {"FINISHED"}
         return {"FINISHED"}
+
+def help_error_top_bar(self, context):
+    layout = self.layout
+    if hasattr(sys, 'last_traceback') and sys.last_traceback:
+        region = context.region
+        if region.alignment == 'RIGHT':
+            layout.operator("devtools.open_error_file", text = "", icon = 'ERROR')
 
 def help_error_menu(self, context):
     layout = self.layout
@@ -256,15 +284,19 @@ classes = (
     DEV_OT_open_error_file,
     DEV_OT_artificial_error,
     DEV_OT_copy_last_traceback,
+    DEV_OT_clear_last_traceback,
 )
 
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
     
+    bpy.types.TOPBAR_HT_upper_bar.append(help_error_top_bar)
     bpy.types.TOPBAR_MT_help.append(help_error_menu)
 
 def unregister():
     bpy.types.TOPBAR_MT_help.remove(help_error_menu)
+    bpy.types.TOPBAR_MT_help.remove(help_error_top_bar)
+
     for cls in classes:
         bpy.utils.unregister_class(cls)

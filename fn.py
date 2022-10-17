@@ -277,3 +277,57 @@ def get_addon_from_python_command(op_name):
         #         if id.startswith(op_name):
         #             print(name)
         #             return name, 
+
+def open_addon_prefs_by_name(name='', module=''):
+    '''Open addon prefs windows with focus on current addon'''
+    if not name:
+        print('error: in open_addon_prefs_by_name : No name specified')
+        return
+    # from .__init__ import bl_info
+    wm = bpy.context.window_manager
+    wm.addon_filter = 'All'
+    if not 'COMMUNITY' in  wm.addon_support: # reactivate community
+        wm.addon_support = set([i for i in wm.addon_support] + ['COMMUNITY'])
+    wm.addon_search = name
+    bpy.context.preferences.active_section = 'ADDONS'
+    if module:
+        bpy.ops.preferences.addon_expand(module=module)
+    bpy.ops.screen.userpref_show('INVOKE_DEFAULT')
+
+## confirm pop-up message
+def show_message_box(_message = "", _title = "Message Box", _icon = 'INFO'):
+    '''Show message box with element passed as string or list
+    if _message if a list of lists:
+        if sublist have 2 element:
+            considered a label [text,icon]
+        if sublist have 3 element:
+            considered as an operator [ops_id_name, text, icon]
+    '''
+
+    def draw(self, context):
+        for l in _message:
+            if isinstance(l, str):
+                self.layout.label(text=l)
+            else:
+                if len(l) == 2: # label with icon
+                    self.layout.label(text=l[0], icon=l[1])
+                elif len(l) == 3: # ops
+                    self.layout.operator_context = "INVOKE_DEFAULT"
+                    self.layout.operator(l[0], text=l[1], icon=l[2], emboss=False) # <- highligh the entry
+                    
+                    ## Offset panel when using row...
+                    # row = self.layout.row()
+                    # row.label(text=l[1])
+                    # row.operator(l[0], icon=l[2])
+    
+    if isinstance(_message, str):
+        _message = [_message]
+    bpy.context.window_manager.popup_menu(draw, title = _title, icon = _icon)
+
+
+def missing_external_editor():
+    mess = 'External editor command or path should be specified in DevTools addon preferences'
+    show_message_box(
+        _message=[mess, ['dev.open_devtools_prefs', 'Open Preferences', 'PREFERENCES']],
+        _title='No External editor')
+    return mess

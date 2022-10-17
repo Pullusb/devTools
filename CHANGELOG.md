@@ -1,5 +1,11 @@
 # Changelog
 
+2.3.0 - 2022-10-17
+
+- added: Top right button "alert" appear when there is a last traceback accessible for quick inspection
+- added: Popup to let user open preference when external editor is not set and trying to open externally
+- added: operator to clear last traceback (accessible in inspect popup)
+
 2.2.2 - 2022-10-17
 
 - added: entry in button context menu to open source of right clicked operator

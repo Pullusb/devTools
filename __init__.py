@@ -2,10 +2,9 @@ bl_info = {
     "name": "dev tools",
     "description": "Add tools in text editor and console to help development",
     "author": "Samuel Bernou",
-    "version": (2, 2, 2),
+    "version": (2, 3, 0),
     "blender": (3, 0, 0),
     "location": "Text editor > toolbar and console header",
-    "warning": "",
     "doc_url": "https://github.com/Pullusb/devTools",
     "tracker_url": "https://github.com/Pullusb/devTools/issues",
     "category": "Text Editor" }
@@ -909,6 +908,13 @@ class DEV_PT_tools_addon_pref(bpy.types.AddonPreferences):
     # copy_pressed_keys : bpy.props.BoolProperty(
     #         name="Copy key",
     #         default=False,
+    #         )
+
+    ## Optional Traceback Button (Always on for now)
+    # show_traceback : bpy.props.BoolProperty(
+    #         name="Alert When Accessible Last Traceback",
+    #         description="Display a button at top right corner to inspect last traceback when there is one available",
+    #         default=True,
     #         )
 
     devtool_addonpack_exclude: bpy.props.StringProperty(

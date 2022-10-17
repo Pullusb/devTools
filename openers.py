@@ -46,8 +46,8 @@ class DEV_OT_open_editor_from_python_command(bpy.types.Operator):
         prefs = fn.get_addon_prefs()
         self.editor = prefs.external_editor
         if not self.editor:
-            mess = 'External editor command or path should be specified in DevTools addon preferences'
-            self.report({'ERROR'}, mess)
+            mess = fn.missing_external_editor()
+            self.report({'WARNING'}, mess)
             return {'CANCELLED'}
 
         # print('EVENT:', event.type, event.value)
@@ -144,8 +144,8 @@ class DEV_OT_open_in_editor(bpy.types.Operator):
         prefs = fn.get_addon_prefs()
         editor = prefs.external_editor
         if not editor:
-            mess = 'External editor command or path should be specified in DevTools addon preferences'
-            self.report({'ERROR'}, mess)
+            mess = fn.missing_external_editor()
+            self.report({'WARNING'}, mess)
             return {'CANCELLED'}
         
         fp = self.filepath
@@ -241,6 +241,16 @@ class DEV_OT_open_file_in_editor(bpy.types.Operator):
         self.report({'INFO'}, mess)
         return {"FINISHED"}
 
+class DEV_OT_open_devtools_prefs(bpy.types.Operator):
+    bl_idname = "dev.open_devtools_prefs"
+    bl_label = "Open Devtool Prefs"
+    bl_description = "Open user preferences window in addon tab with addon name"
+    bl_options = {"REGISTER", 'INTERNAL'}
+
+    def execute(self, context):
+        from .__init__ import bl_info
+        fn.open_addon_prefs_by_name(name=bl_info['name'], module=__package__)
+        return {'FINISHED'}
 
 classes = (
     DEV_OT_open_external_editor,
@@ -249,6 +259,7 @@ classes = (
     DEV_OT_open_filepath, # open folder
     DEV_OT_open_file_in_editor, # open file with external editor
     DEV_OT_open_editor_from_python_command,
+    DEV_OT_open_devtools_prefs,
 )
 
 def python_command_open_ui(self, context):
