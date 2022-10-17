@@ -50,17 +50,21 @@ class DEV_OT_open_editor_from_python_command(bpy.types.Operator):
             self.report({'ERROR'}, mess)
             return {'CANCELLED'}
 
-        
-        old_clip = context.window_manager.clipboard
-
-        bpy.ops.ui.copy_python_command_button() # copy directly python command
+        # print('EVENT:', event.type, event.value)
+        launched_from_menu = context.region.type == 'UI'
+        if launched_from_menu:
+            # Get UI command using ops
+            old_clip = context.window_manager.clipboard
+            bpy.ops.ui.copy_python_command_button() # copy directly python command
 
         clip = context.window_manager.clipboard
         if not clip.startswith('bpy.ops'):
             self.report({'ERROR'}, 'Clipboard should contain a python operator command "bpy.ops..."')
             return {'CANCELLED'}
 
-        context.window_manager.clipboard = old_clip
+        if launched_from_menu:
+            # restore old clip
+            context.window_manager.clipboard = old_clip
 
         op_name = clip.strip()
         if op_name.startswith('bpy.ops.'):
@@ -255,9 +259,13 @@ def python_command_open_ui(self, context):
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
-    bpy.types.UI_MT_button_context_menu.append(python_command_open_ui)
+    
+    if bpy.app.version >= (3,3,0):
+        bpy.types.UI_MT_button_context_menu.append(python_command_open_ui)
 
 def unregister():
-    bpy.types.UI_MT_button_context_menu.remove(python_command_open_ui)
+    if bpy.app.version >= (3,3,0):
+        bpy.types.UI_MT_button_context_menu.remove(python_command_open_ui)
+    
     for cls in classes:
         bpy.utils.unregister_class(cls)
