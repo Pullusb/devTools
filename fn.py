@@ -1,5 +1,6 @@
 import bpy
 import subprocess
+import sys
 from types import ModuleType
 from pathlib import Path
 from sys import platform
@@ -208,6 +209,16 @@ def set_file_in_text_editor(filepath, linum=None, context=None):
         ## owtherwise stay at the top of the document
         with bpy.context.temp_override(area=text_editor):
             bpy.ops.text.move(type='LINE_BEGIN')
+
+def install_pip_module(module: str):
+    # get path to blender python
+    pybin = sys.executable
+    # ensure pip is installed
+    cmd = [pybin, '-m', 'ensurepip']
+    subprocess.call(cmd)
+    # install module
+    cmd = [pybin, '-m', 'pip', 'install', module]
+    subprocess.call(cmd)
 
 ## Get source addon from idname
 def get_module_path(mod):

@@ -2,7 +2,7 @@ bl_info = {
     "name": "dev tools",
     "description": "Add tools in text editor and console to help development",
     "author": "Samuel Bernou",
-    "version": (2, 3, 0),
+    "version": (2, 4, 0),
     "blender": (3, 0, 0),
     "location": "Text editor > toolbar and console header",
     "doc_url": "https://github.com/Pullusb/devTools",
@@ -21,6 +21,7 @@ from pathlib import Path
 from . import fn
 from . import addon_listing
 from . import openers
+from . import install_pip_modules
 from . import error_handle
 from . import api_explore
 from . import console_ops
@@ -1005,6 +1006,7 @@ def register():
         return
 
     openers.register()
+    install_pip_modules.register()
     error_handle.register()
     api_explore.register()
     for cls in classes:
@@ -1046,6 +1048,7 @@ def unregister():
     error_handle.unregister()
     console_ops.unregister()
     openers.unregister()
+    install_pip_modules.unregister()
     
     del bpy.types.Scene.enum_DebugPrint
     

@@ -1,5 +1,9 @@
 # Changelog
 
+2.4.0 - 2023-03-05
+
+- added: `Install pip module` from `help` menu (beta)
+
 2.3.0 - 2022-10-17
 
 - added: Top right button "alert" appear when there is a last traceback accessible for quick inspection
