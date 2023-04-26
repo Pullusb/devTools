@@ -250,7 +250,10 @@ def get_mod_classes(mod, classes=None, mod_path=None, depth=0):
 
 def get_addon_from_python_command(op_name):
     '''Get source addon from python command id_name
-    Return a tuple containing module name and path to file'''
+    param op_name : Operator idname or identifier (class name)
+    Return a tuple containing module name and path to file
+    '''
+
     import addon_utils
     from bpy.types import Operator
     from importlib import import_module
@@ -260,18 +263,16 @@ def get_addon_from_python_command(op_name):
     if op_name.startswith('bpy.ops.'):
         # op_name = op_name.replace('bpy.ops.', '').split('(')[0]
         op_name = op_name.split('.', 2)[-1].split('(')[0]
-    # print("op_name", op_name)#Dbg
     
     for m in addon_utils.modules():
         name = m.__name__
-        default, loaded = addon_utils.check(name)
+        _default, loaded = addon_utils.check(name)
         if not loaded:
             continue
         mod = import_module(name)
         classes = get_mod_classes(mod)
+
         for c in classes:
-            # print(c)
-            # print(getattr(c, "bl_idname", ""))
             if (
                 issubclass(c, Operator) 
                 and  
@@ -279,7 +280,7 @@ def get_addon_from_python_command(op_name):
                 ):
                 print(name)
                 return name, str(m).rsplit("'",1)[0].split("'")[-1]
- 
+
         # for k in dir(mod):
         #     print(k)
         #     cls = getattr(mod, k, None)

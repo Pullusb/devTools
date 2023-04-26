@@ -1,5 +1,9 @@
 # Changelog
 
+2.5.0 - 2023-04-26
+
+- changed: better integration of the `open operator in editor` in button_context right-click menu
+
 2.4.0 - 2023-03-05
 
 - added: `Install pip module` from `help` menu (beta)

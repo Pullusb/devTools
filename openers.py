@@ -38,9 +38,7 @@ class DEV_OT_open_editor_from_python_command(bpy.types.Operator):
     bl_description = "Open file containing python operator in external editor (set in preference)"
     bl_options = {"REGISTER"}
 
-    # @classmethod
-    # def poll(cls, context):
-    #     return context.area.type == 'TEXT_EDITOR'
+    identifier : bpy.props.StringProperty(default='', options={'SKIP_SAVE'})
 
     def invoke(self, context, event):
         prefs = fn.get_addon_prefs()
@@ -50,42 +48,40 @@ class DEV_OT_open_editor_from_python_command(bpy.types.Operator):
             self.report({'WARNING'}, mess)
             return {'CANCELLED'}
 
-        # print('EVENT:', event.type, event.value)
-        launched_from_menu = context.region.type == 'UI'
-        if launched_from_menu:
-            # Get UI command using ops
-            old_clip = context.window_manager.clipboard
-            bpy.ops.ui.copy_python_command_button() # copy directly python command
+        op_name = self.identifier
 
-        clip = context.window_manager.clipboard
-        if not clip.startswith('bpy.ops'):
-            self.report({'ERROR'}, 'Clipboard should contain a python operator command "bpy.ops..."')
-            return {'CANCELLED'}
+        if not self.identifier:
+            clip = context.window_manager.clipboard
+            if not clip.startswith('bpy.ops'):
+                self.report({'ERROR'}, 'Clipboard should contain a python operator command "bpy.ops..."')
+                return {'CANCELLED'}
 
-        if launched_from_menu:
-            # restore old clip
-            context.window_manager.clipboard = old_clip
+            op_name = clip.strip()
+            if op_name.startswith('bpy.ops.'):
+                op_name = op_name.split('.', 2)[-1].split('(')[0]
+        else:
+            # Create idname from identifier (which derive from bl_idname)
+            if '_OT_' in op_name:
+                op_name = '.'.join(op_name.split('_OT_')).lower()
+                print(self.identifier, '->', op_name)
 
-        op_name = clip.strip()
-        if op_name.startswith('bpy.ops.'):
-            # op_name = op_name.replace('bpy.ops.', '').split('(')[0]
-            op_name = op_name.split('.', 2)[-1].split('(')[0]
-
-        addon_spec = fn.get_addon_from_python_command(op_name)
+        addon_spec = fn.get_addon_from_python_command(op_name) # use_identifier=bool(self.identifier)
         if addon_spec is None:
-            self.report({'ERROR'}, f'Could not found addon for operator idname {clip}')
+            self.report({'ERROR'}, f'Could not found addon for operator "{op_name}"')
             return {'CANCELLED'}
         
         _name, path = addon_spec
         ## use addon module name and search for file and line containing this idname in files
         addon = Path(path)
-
+        
         if addon.name == '__init__.py':
             file_to_search = [f for f in addon.parent.resolve().rglob('*.py') if not '.git' in f.as_posix()]
         else:
             file_to_search = [addon]
         
-        print(f'looking in {len(file_to_search)} file')#Dbg
+        print(f'Searching at {addon}')
+        print(f'Looking in {len(file_to_search)} file')#Dbg
+        # print('file_to_search: ', file_to_search)
         
         self.pyfiles = []
         for f in file_to_search:
@@ -96,7 +92,7 @@ class DEV_OT_open_editor_from_python_command(bpy.types.Operator):
                         self.pyfiles.append((f, i))
         
         if not self.pyfiles:
-            self.report({'ERROR'}, f'Could not found relevant files in addon for id_name {op_name}')
+            self.report({'ERROR'}, f'Could not found relevant files in addon for operator {op_name}')
             return {'CANCELLED'}
         
         # for file, line in self.pyfiles:
@@ -263,9 +259,11 @@ classes = (
 )
 
 def python_command_open_ui(self, context):
-    # if get_addon_prefs().external_editor:
     layout = self.layout
-    layout.operator('devtools.open_editor_from_python_command', text="Open In Code Editor")
+    if getattr(context, "button_operator", None):
+        rna = context.button_operator.bl_rna
+        print(f'context.button_operator.bl_rna: identifier(Class) = "{rna.identifier}", name(label) = "{rna.name}"')
+        layout.operator('devtools.open_editor_from_python_command', text="Open In Code Editor").identifier = rna.identifier
 
 def register():
     for cls in classes:
