@@ -1,5 +1,9 @@
 # Changelog
 
+2.5.1 - 2023-05-23
+
+- changed: add `temp_override` in text editor's context override
+
 2.5.0 - 2023-04-26
 
 - changed: better integration of the `open operator in editor` in button_context right-click menu

@@ -2,7 +2,7 @@ bl_info = {
     "name": "dev tools",
     "description": "Add tools in text editor and console to help development",
     "author": "Samuel Bernou",
-    "version": (2, 5, 0),
+    "version": (2, 5, 1),
     "blender": (3, 0, 0),
     "location": "Text editor > toolbar and console header",
     "doc_url": "https://github.com/Pullusb/devTools",
@@ -809,6 +809,9 @@ class DEV_OT_create_context_override(bpy.types.Operator):
                 #for region in area.regions:
                 #    if region.type == 'WINDOW':
                 return {{'window': window, 'screen': screen, 'area': area}}#, 'region': region
+
+with bpy.context.temp_override(**get_override()):
+    # contextual ops here
 '''                     
                         if event.shift:# <- Shift click condition to paper clip
                             context.window_manager.clipboard = access
