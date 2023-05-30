@@ -948,7 +948,7 @@ class DEV_PT_tools_addon_pref(bpy.types.AddonPreferences):
         box.label(text='Shortcuts')
         col = box.column()
         col.label(text='Ctrl+Shift+I : classic import modules insertion (also works in console)' )
-        col.label(text='Ctrl+Shift+P : print debug variable insertion'')
+        col.label(text='Ctrl+Shift+P : print debug variable insertion')
         col.label(text='Ctrl+Alt+P : print("selection") insertion')
         col.label(text='Ctrl+P : print(selection) insertion')
         # col.label(text='Ctrl+L : Quote selection (with automatic quote or double quote choice)')

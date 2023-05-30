@@ -315,7 +315,7 @@ class DEV_MT_console_path_template_menu(bpy.types.Menu):
         ## List all libraries filepath
         layout.operator("console.insert", text='List libraries Filepath').text="for lib in bpy.data.libraries: print(lib.filepath) # print(f'{lib.name}: {lib.filepath}')"
         ## pprint list by type (augment pprint width to get datablock name + filepath on same line)
-        layout.operator("console.insert", text='List Libs By Types').text="pp({name: [f'{b.name}->{b.filepath}' for b in getattr(bpy.data, name)] for name in ['images', 'movieclips', 'sounds', 'fonts', 'sounds', 'libraries']}, width=160)"
+        layout.operator("console.insert", text='List Libs By Types').text="pp({name: [f'{b.name} : {b.filepath}' for b in getattr(bpy.data, name)] for name in ['images', 'movieclips', 'sounds', 'fonts', 'sounds', 'libraries']}, width=160)"
 
 class DEV_MT_console_template(bpy.types.Menu):
     bl_label = "Templates"
