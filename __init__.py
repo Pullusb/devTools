@@ -2,7 +2,7 @@ bl_info = {
     "name": "dev tools",
     "description": "Add tools in text editor and console to help development",
     "author": "Samuel Bernou",
-    "version": (2, 5, 1),
+    "version": (2, 6, 0),
     "blender": (3, 0, 0),
     "location": "Text editor > toolbar and console header",
     "doc_url": "https://github.com/Pullusb/devTools",
@@ -941,14 +941,17 @@ class DEV_PT_tools_addon_pref(bpy.types.AddonPreferences):
         
         layout.separator()
         layout.operator("wm.path_open", text='Edit text editor quick modules imports (ctrl + shift + i)').filepath = str(Path(__file__).with_name('imports.txt'))
+        layout.operator("wm.path_open", text='Edit console editor quick modules imports (ctrl + shift + i)').filepath = str(Path(__file__).with_name('console_imports.txt'))
         # layout.separator()
 
         box = layout.box()
         box.label(text='Shortcuts')
         col = box.column()
-        col.label(text='Ctrl+Shift+I : classic import modules insertion   |  Ctrl+P : print(selection) insertion')
-        col.label(text='Ctrl+Alt+P : print("selection") insertion   |  Ctrl+Shift+P : print debug variable insertion')
-        col.label(text='Ctrl+L : Quote selection (with automatic quote or double quote choice)')
+        col.label(text='Ctrl+Shift+I : classic import modules insertion (also works in console)' )
+        col.label(text='Ctrl+Shift+P : print debug variable insertion'')
+        col.label(text='Ctrl+Alt+P : print("selection") insertion')
+        col.label(text='Ctrl+P : print(selection) insertion')
+        # col.label(text='Ctrl+L : Quote selection (with automatic quote or double quote choice)')
 
 
 ###---KEYMAP
@@ -961,20 +964,21 @@ def register_keymaps():
 
     kmi = km.keymap_items.new("devtools.simple_print", type = "P", value = "PRESS", ctrl = True)
     kmi.properties.quote = False
+    addon_keymaps.append((km, kmi))
     kmi = km.keymap_items.new("devtools.simple_print", type = "P", value = "PRESS", ctrl = True, alt = True)
     kmi.properties.quote = True
+    addon_keymaps.append((km, kmi))
     kmi = km.keymap_items.new("devtools.debug_print_variable", type = "P", value = "PRESS", ctrl = True, shift = True)
+    addon_keymaps.append((km, kmi))
     kmi = km.keymap_items.new("devtools.quote", type = "L", value = "PRESS", ctrl = True)
+    addon_keymaps.append((km, kmi))
     kmi = km.keymap_items.new("devtools.insert_import", type = "I", value = "PRESS", ctrl = True, shift=True)
+    addon_keymaps.append((km, kmi))
 
-    addon_keymaps.append(km)
 
 def unregister_keymaps():
-    wm = bpy.context.window_manager
-    for km in addon_keymaps:
-        for kmi in km.keymap_items:
-            km.keymap_items.remove(kmi)
-        wm.keyconfigs.addon.keymaps.remove(km)
+    for km, kmi in addon_keymaps:
+        km.keymap_items.remove(kmi)
     addon_keymaps.clear()
 
 

@@ -1,5 +1,12 @@
 # Changelog
 
+2.6.0 - 2023-05-30
+
+- fixed: keymap unregister
+- added: ctrl + shift + I custom imports in console (accessible in template menu)
+- added: dedicated text file in addon folder for custom import module in console
+- added: path listing templates in console templates menu
+
 2.5.1 - 2023-05-23
 
 - changed: add `temp_override` in text editor's context override

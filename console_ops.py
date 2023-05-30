@@ -1,4 +1,5 @@
 import bpy
+from pathlib import Path
 from . import fn
 
 from bpy.props import (
@@ -63,6 +64,43 @@ class DEV_OT_console_context_area_access(bpy.types.Operator):
             return {'CANCELLED'}
 
         return {'RUNNING_MODAL'}
+
+class DEV_OT_console_insert_and_exec(bpy.types.Operator):
+    bl_idname = "devtools.console_insert_and_exec"
+    bl_label = "Console Insert And Exec"
+    bl_description = "Insert and execute text in console"
+    bl_options = {"REGISTER"}
+
+    @classmethod
+    def poll(cls, context):
+        return context.area.type == 'CONSOLE'
+    
+    text : bpy.props.StringProperty(default='', options={'SKIP_SAVE'})
+
+    def execute(self, context):
+        fn.console_write_and_execute_multiline(self.text, clear_line=True)
+        return {"FINISHED"}
+
+class DEV_OT_console_insert_import(bpy.types.Operator):
+    bl_idname = "devtools.console_insert_import"
+    bl_label = "Console Insert Import Text"
+    bl_description = "Insert and execute predefined imports in console"
+    bl_options = {"REGISTER"}
+
+    @classmethod
+    def poll(cls, context):
+        return context.area.type == 'CONSOLE'
+
+    def execute(self, context):
+        filename = 'console_imports.txt'
+        header_file = Path(__file__).with_name(filename)
+        if not header_file.exists():
+            self.report({'ERROR'}, f'{filename} not found in addon folder! path used : {header_file}')
+            return {"CANCELLED"}
+
+        import_text = header_file.read_text()
+        fn.console_write_and_execute_multiline(import_text, clear_line=True, context=context)
+        return {"FINISHED"}
 
 class DEV_OT_console_gp_list_2d_pos(bpy.types.Operator):
     bl_idname = "devtools.console_gp_list_2d_pos"
@@ -267,6 +305,18 @@ class DEV_MT_console_gp_template_menu(bpy.types.Menu):
         layout.operator("devtools.console_gp_2d_to_3d", text='GP 2D to 3D') # , icon='VIEW3D'
         layout.operator("devtools.console_gp_3d_to_2d", text='GP 3D to 2D') # , icon='STICKY_UVS_LOC'
 
+class DEV_MT_console_path_template_menu(bpy.types.Menu):
+    bl_label = "GPencil Templates"
+
+    def draw(self, context):
+        layout = self.layout
+        ## List all links (blend_path utils)
+        layout.operator("console.insert", text='List blend_paths').text='for p in bpy.utils.blend_paths(absolute=False, packed=False, local=False): print(p)'
+        ## List all libraries filepath
+        layout.operator("console.insert", text='List libraries Filepath').text="for lib in bpy.data.libraries: print(lib.filepath) # print(f'{lib.name}: {lib.filepath}')"
+        ## pprint list by type (augment pprint width to get datablock name + filepath on same line)
+        layout.operator("console.insert", text='List Libs By Types').text="pp({name: [f'{b.name}->{b.filepath}' for b in getattr(bpy.data, name)] for name in ['images', 'movieclips', 'sounds', 'fonts', 'sounds', 'libraries']}, width=160)"
+
 class DEV_MT_console_template(bpy.types.Menu):
     bl_label = "Templates"
 
@@ -274,7 +324,9 @@ class DEV_MT_console_template(bpy.types.Menu):
         layout = self.layout
         # layout.operator("wm.call_menu", text="Gpencil").name = "DEV_MT_console_gp_template_menu"
         layout.menu("DEV_MT_console_gp_template_menu", text="Gpencil")
-
+        layout.menu("DEV_MT_console_path_template_menu", text="List Path")
+        # layout.operator("devtools.console_insert_and_exec", text='Classic Imports').text='import os, re, fnmatch, glob\nfrom pathlib import Path\nfrom pprint import pprint as pp'
+        layout.operator("devtools.console_insert_import", text='Usual Imports')
 
 class DEV_MT_console_dev(bpy.types.Menu):
     bl_label = "Dev"
@@ -337,6 +389,9 @@ def register_keymaps():
     kmi = km.keymap_items.new('dev.console_api_search', type='F', value='PRESS', ctrl=True)
     addon_keymaps.append((km, kmi))
 
+    kmi = km.keymap_items.new("devtools.console_insert_import", type = "I", value = "PRESS", ctrl = True, shift=True)
+    addon_keymaps.append((km, kmi))
+
 
 def unregister_keymaps():
     for km, kmi in addon_keymaps:
@@ -350,11 +405,14 @@ classes = (
     DEV_OT_console_gp_list_2d_pos,
     DEV_OT_console_gp_2d_to_3d,
     DEV_OT_console_gp_3d_to_2d,
+    DEV_OT_console_insert_import,
+    DEV_OT_console_insert_and_exec,
 
     DEV_PG_history_line,
     DEV_OT_copy_console_history_select,
     # DEV_PT_console_history_lines, # direct panel
 
+    DEV_MT_console_path_template_menu,
     DEV_MT_console_gp_template_menu,
     DEV_MT_console_dev,
     DEV_MT_console_template

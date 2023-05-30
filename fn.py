@@ -343,3 +343,27 @@ def missing_external_editor():
         _message=[mess, ['dev.open_devtools_prefs', 'Open Preferences', 'PREFERENCES']],
         _title='No External editor')
     return mess
+
+def console_write_and_execute_multiline(content, clear_line=True, skip_empty_line=True, context=None):
+    '''Content can be either a string or a list of strings'''
+
+    context = context or bpy.context
+    if context.area.type != 'CONSOLE':
+        print('/!\ console_write_and_execute_multiline not executed in a CONSOLE area')
+        return
+    
+    if isinstance(content, str):
+        # get a list of \n
+        content = content.split('\n') 
+
+    if clear_line and context.area.spaces.active.history[-1].body:
+        # clear line if there is text already
+        bpy.ops.console.clear_line()
+
+    for lines in content:
+        # split on returns
+        for line in lines.split('\n'):
+            if skip_empty_line and not line.strip():
+                continue
+            bpy.ops.console.insert(text=line)
+            bpy.ops.console.execute()
