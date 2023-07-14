@@ -2,7 +2,7 @@ bl_info = {
     "name": "dev tools",
     "description": "Add tools in text editor and console to help development",
     "author": "Samuel Bernou",
-    "version": (2, 6, 0),
+    "version": (2, 6, 1),
     "blender": (3, 0, 0),
     "location": "Text editor > toolbar and console header",
     "doc_url": "https://github.com/Pullusb/devTools",
@@ -610,9 +610,14 @@ class DEV_OT_print_resources_paths(bpy.types.Operator):
         lines.append('Local user addon source (usually appdata roaming)\n# Destination of "install from file":\n{}\n'.format(Path(bpy.utils.user_resource('SCRIPTS')) / 'addons') )
 
         preferences = bpy.context.preferences
-        external_script_dir = preferences.filepaths.script_directory
-        if external_script_dir and len(external_script_dir) > 2:
-            lines.append(f'External scripts:\n{external_script_dir}\n')
+        if bpy.app.version < (3, 6, 0):
+            external_script_dir = preferences.filepaths.script_directory
+            if external_script_dir and len(external_script_dir) > 2:
+                lines.append(f'External scripts:\n{external_script_dir}\n')
+        else:
+            for s in preferences.filepaths.script_directories:
+                if s.directory:
+                    lines.append(f'{s.name}:\n{s.directory}\n')
 
         #config
         lines.append(f"Config path:\n{bpy.utils.user_resource('CONFIG')}\n")

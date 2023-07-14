@@ -23,20 +23,25 @@ from bpy.types import (
                     Panel
                     )
 
-
 def get_addon_location(fp) -> str:
     '''get addon filepath and return a name of the addon location'''
-    # fp = str(Path(fp))
+
     if fp.startswith( str(Path(bpy.utils.user_resource('SCRIPTS')) / 'addons') ):
         return 'user'
 
     if fp.startswith( str(Path(bpy.utils.resource_path('LOCAL')) / 'scripts' / 'addons') ):
         return 'native'
 
-    external_scripts = bpy.context.preferences.filepaths.script_directory
-    if external_scripts:
-        if fp.startswith( str(Path(external_scripts)) ):
-            return 'external'
+    if bpy.app.version < (3, 6, 0):
+        external_scripts = bpy.context.preferences.filepaths.script_directory
+        if external_scripts:
+            if fp.startswith( str(Path(external_scripts)) ):
+                return 'external'
+    else:
+        external_scripts = bpy.context.preferences.filepaths.script_directories
+        for s in external_scripts:
+            if s.directory and fp.startswith( str(Path(s.directory)) ):
+                return 'external'
 
     return 'other'
 

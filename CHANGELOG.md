@@ -1,5 +1,9 @@
 # Changelog
 
+2.6.1 - 2023-07-14
+
+- fixed: addons path API changes in 3.6.0+
+
 2.6.0 - 2023-05-30
 
 - fixed: keymap unregister

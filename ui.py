@@ -51,9 +51,15 @@ class DEV_PT_dev_tools(bpy.types.Panel):
         # layout = self.layout
         # common script (if specified)
         preferences = bpy.context.preferences
-        external_script_dir = preferences.filepaths.script_directory
-        if external_script_dir and len(external_script_dir) > 2:
-            col.operator('devtools.open_filepath', text='External scripts folder').fp = str(Path(external_script_dir))
+
+        if bpy.app.version < (3, 6, 0):
+            external_script_dir = preferences.filepaths.script_directory
+            if external_script_dir and len(external_script_dir) > 2:
+                col.operator('devtools.open_filepath', text='External scripts folder').fp = str(Path(external_script_dir))
+        else:
+            for s in preferences.filepaths.script_directories:
+                if s.directory:
+                    col.operator('devtools.open_filepath', text=s.name).fp = str(Path(s.directory))
 
         ##  standard operator
         # layout.operator("wm.path_open", text='Open config location').filepath = bpy.utils.user_resource('CONFIG')
