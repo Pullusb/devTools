@@ -260,9 +260,19 @@ classes = (
 
 def python_command_open_ui(self, context):
     layout = self.layout
+    # print(dir(context))
+    # if getattr(context, "button_prop", None):
+    #     print(context.button_prop)
+    #     rna = context.button_prop.bl_rna
+    #     print(f'context.button_operator.bl_rna: identifier(Class) = "{rna.identifier}", name(label) = "{rna.name}"')
+    #     print(dir(context.button_prop))
+    #     print(context.button_prop.path_)
+    #     print(context.button_prop.identifier)
+    #     print()
+    #     print(dir(context.button_prop.bl_rna))
     if getattr(context, "button_operator", None):
         rna = context.button_operator.bl_rna
-        print(f'context.button_operator.bl_rna: identifier(Class) = "{rna.identifier}", name(label) = "{rna.name}"')
+        # print(f'context.button_operator.bl_rna: identifier(Class) = "{rna.identifier}", name(label) = "{rna.name}"')
         layout.operator('devtools.open_editor_from_python_command', text="Open In Code Editor").identifier = rna.identifier
 
 def register():
