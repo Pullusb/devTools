@@ -1,5 +1,10 @@
 # Changelog
 
+2.7.0 - 2023-09-08
+
+- fixed: overrides method for Blender 4.0.0
+- added: in version 4.0.0 use code editor set in preference if none is set in addon prefs
+
 2.6.1 - 2023-07-14
 
 - fixed: addons path API changes in 3.6.0+

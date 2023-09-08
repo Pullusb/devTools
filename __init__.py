@@ -2,7 +2,7 @@ bl_info = {
     "name": "dev tools",
     "description": "Add tools in text editor and console to help development",
     "author": "Samuel Bernou",
-    "version": (2, 6, 1),
+    "version": (2, 7, 0),
     "blender": (3, 0, 0),
     "location": "Text editor > toolbar and console header",
     "doc_url": "https://github.com/Pullusb/devTools",
@@ -168,11 +168,12 @@ class DEV_OT_simple_print(bpy.types.Operator):
         ###On a new line
         # heading_spaces = re.search('^(\s*).*', text.current_line.body).group(1)
         # new = fix_indentation(debugPrint, len(heading_spaces))#to insert at selection level : charPos
-        # bpy.ops.text.move(override, type='LINE_END')
-        # bpy.ops.text.insert(override, text= '\n'+new)
+        # with context.temp_override(**override):
+        #     bpy.ops.text.move(type='LINE_END')
+        # text.write('\n'+new)
 
         ### In place
-        bpy.ops.text.insert(override, text=debugPrint)
+        text.write(debugPrint)
         return {"FINISHED"}
 
 
@@ -189,7 +190,7 @@ class DEV_OT_quote(bpy.types.Operator):
     def execute(self, context):
         text, override = fn.get_text(context)
         # charPos = text.current_character
-        clip = copy_selected()
+        clip = copy_selected(context=context)
    
         if clip is None: #copy word under cursor
             bpy.ops.text.select_word()
@@ -207,11 +208,12 @@ class DEV_OT_quote(bpy.types.Operator):
         ###On a new line
         # heading_spaces = re.search('^(\s*).*', text.current_line.body).group(1)
         # new = fix_indentation(debugPrint, len(heading_spaces))#to insert at selection level : charPos
-        # bpy.ops.text.move(override, type='LINE_END')
-        # bpy.ops.text.insert(override, text= '\n'+new)
+        # with context.temp_override(**override):
+        #     bpy.ops.text.move(type='LINE_END')
+        #text.write('\n'+new)
 
         ### In place
-        bpy.ops.text.insert(override, text=debugPrint)
+        text.write(debugPrint)
         return {"FINISHED"}
 
 
@@ -241,7 +243,9 @@ class DEV_OT_insert_import(bpy.types.Operator):
         
         import_text = header_file.read_text()
 
-        bpy.ops.text.insert(override, text=import_text)
+        # with context.temp_override(**override):
+        #     bpy.ops.text.insert(text=import_text)
+        text.write(import_text)
 
         ### Toggling coding space data basic feature
         # TODO (add box in pref to choose basic behavior)
@@ -293,10 +297,12 @@ class DEV_OT_debug_print_variable(bpy.types.Operator):
         #got to end of line,
         ### > current_character" from "Text" is read-only
         #text.current_character = len(text.lines[text.current_line_index].body)
-        bpy.ops.text.move(override, type='LINE_END')
 
-        #put a return and paste with indentation
-        bpy.ops.text.insert(override, text= '\n'+new)
+        with context.temp_override(**override):
+            bpy.ops.text.move(type='LINE_END')
+            #put a return and paste with indentation
+            bpy.ops.text.insert(text='\n'+new)
+
         return {"FINISHED"}
         
 
@@ -453,13 +459,6 @@ class DEV_OT_time_selection(bpy.types.Operator):
         bpy.ops.text.jump(line=end_id+2)
         bpy.ops.text.move(type='LINE_END')
         text.write('\n'+new)
-
-        #got to end of line,
-        #text.current_character = len(text.lines[text.current_line_index].body)
-        #bpy.ops.text.move(override, type='LINE_END')
-
-        #Put a return and paste with indentation
-        #bpy.ops.text.insert(override, text= '\n'+new)
         return {"FINISHED"}
 
 
@@ -676,7 +675,9 @@ class DEV_OT_insert_date(bpy.types.Operator):
             content = strftime('%Y/%m/%d')#date
 
         ## print detailed version -> %c: full detailed, %A %B full month and day
-        bpy.ops.text.insert(override, text=content)
+        # with context.temp_override(**override):
+        #     bpy.ops.text.insert(text=content)
+        text.write(content)
         return {"FINISHED"}
 
 
@@ -708,7 +709,9 @@ class DEV_OT_blender_info(bpy.types.Operator):
         build_text = "Date : {}\nHash : {}\nBranch : {}\nVersion: {}".format(\
         self.strip_b_str(bpy.app.build_date), self.strip_b_str(bpy.app.build_hash), self.strip_b_str(bpy.app.build_branch), bpy.app.version_string)
 
-        bpy.ops.text.insert(override, text=build_text)
+        # with context.temp_override(**override):
+        #     bpy.ops.text.insert(text=build_text)
+        text.write(build_text)
 
         #print in console
         print('\n---Full build infos---')
@@ -780,7 +783,7 @@ class DEV_OT_create_context_override(bpy.types.Operator):
     bl_options = {"REGISTER", "INTERNAL"}
 
     def invoke(self, context, event):
-        self.override = {'screen':context.window.screen, 'area': context.area}
+        self.override = {'screen':context.window.screen, 'area': context.area, 'region': context.region}
         self.is_console = True if context.area.type == 'CONSOLE' else False
         context.window_manager.modal_handler_add(self)
         context.window.cursor_set("PICK_AREA")
@@ -800,8 +803,9 @@ class DEV_OT_create_context_override(bpy.types.Operator):
                         if event.shift:# <- Shift click condition to paper clip
                             context.window_manager.clipboard = access
                         else:
-                            bpy.ops.console.clear_line(self.override) # clear line
-                            bpy.ops.console.insert(self.override, text=access)
+                            with context.temp_override(**self.override):
+                                bpy.ops.console.clear_line() # clear line
+                                bpy.ops.console.insert(text=access)
                     
                     else:# launched from text editor
                     
@@ -821,7 +825,8 @@ with bpy.context.temp_override(**get_override()):
                         if event.shift:# <- Shift click condition to paper clip
                             context.window_manager.clipboard = access
                         else:
-                            bpy.ops.text.insert(self.override, text= '\n'+access)
+                            with context.temp_override(**self.override):
+                                bpy.ops.text.insert(text='\n'+access)
 
                     self.report({'INFO'}, f'Screen {screen.name} area of {a.type} index {i}')#WARNING, ERROR
                     break    
