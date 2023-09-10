@@ -130,11 +130,7 @@ class DEV_OT_open_error_file(bpy.types.Operator):
         if self.path_line:
             # print('self.path_line: ', self.path_line)#Dbg
             if self.use_external:
-                editor = fn.get_addon_prefs().external_editor
-                if not editor:
-                    # Fallback to text editor in general prefs since v4.0.0 
-                    editor = getattr(context.preferences.filepaths, 'text_editor', None)
-
+                editor = fn.get_external_editor()
                 if not editor:
                     mess = fn.missing_external_editor()
                     self.report({'WARNING'}, mess)

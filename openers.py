@@ -42,7 +42,7 @@ class DEV_OT_open_editor_from_python_command(bpy.types.Operator):
 
     def invoke(self, context, event):
         prefs = fn.get_addon_prefs()
-        self.editor = prefs.external_editor
+        self.editor = fn.get_external_editor()
         if not self.editor:
             mess = fn.missing_external_editor()
             self.report({'WARNING'}, mess)
@@ -137,13 +137,12 @@ class DEV_OT_open_in_editor(bpy.types.Operator):
         default=False, options={'SKIP_SAVE'})
 
     def execute(self, context):
-        prefs = fn.get_addon_prefs()
-        editor = prefs.external_editor
+        editor = fn.get_external_editor()
         if not editor:
             mess = fn.missing_external_editor()
             self.report({'WARNING'}, mess)
             return {'CANCELLED'}
-        
+
         fp = self.filepath
         fpo = Path(fp)
         ## Always resolve...

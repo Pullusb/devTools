@@ -15,6 +15,14 @@ def get_addon_prefs():
     addon_prefs = preferences.addons[addon_name].preferences
     return (addon_prefs)
 
+def get_external_editor():
+    editor = get_addon_prefs().external_editor.strip()
+    if not editor:
+        # Fallback to text editor (in general prefs since Blender 4.0.0)
+        editor = getattr(bpy.context.preferences.filepaths, 'text_editor', None).strip()
+
+    return editor
+
 # unused
 def copy_to_clipboard():
     '''Copy selected Text to clipboard'''
@@ -24,10 +32,8 @@ def copy_to_clipboard():
 
 def open_file(filepath):
     '''open the file at the path given with cmd relative to user's OS'''
-    # preferences = bpy.context.preferences
-    # addon_prefs = preferences.addons[__name__].preferences
-    addon_prefs = get_addon_prefs()
-    editor = addon_prefs.external_editor
+
+    editor = get_external_editor()
 
     if not filepath:
         return('No file path !')
@@ -340,7 +346,9 @@ def show_message_box(_message = "", _title = "Message Box", _icon = 'INFO'):
 def missing_external_editor():
     mess = 'External editor command or path should be specified in DevTools addon preferences'
     show_message_box(
-        _message=[mess, ['dev.open_devtools_prefs', 'Open Preferences', 'PREFERENCES']],
+        _message=[mess,
+                'Since 4.0.0, you can set editor in preferences > filepath > text editor'
+                ['dev.open_devtools_prefs', 'Open Preferences', 'PREFERENCES']],
         _title='No External editor')
     return mess
 
