@@ -24,7 +24,7 @@ class DEV_OT_console_context_area_access(bpy.types.Operator):
     def invoke(self, context, event):
         self.console_override = None
         if context.area.type == 'CONSOLE':
-            self.console_override = {'screen':context.window.screen, 'area': context.area}
+            self.console_override = {'screen':context.window.screen, 'area': context.area, 'region': context.region}
         context.window_manager.modal_handler_add(self)
         context.window.cursor_set("PICK_AREA")
         return {'RUNNING_MODAL'}
@@ -52,10 +52,10 @@ class DEV_OT_console_context_area_access(bpy.types.Operator):
                                     'area'  :a,
                                     }
                         break    
-            
+
             if self.console_override:
                 context.window.cursor_set("DEFAULT") # reset cursor
-                with context.temp_override(**self.override):
+                with context.temp_override(**self.console_override):
                     # bpy.ops.console.clear_line() # clear line ?
                     bpy.ops.console.insert(text=access)
 
