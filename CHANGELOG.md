@@ -1,5 +1,9 @@
 # Changelog
 
+2.7.2 - 2024-02-20
+
+- fixed: override method (Blender 4.0.0) for `Select area`` in console
+
 2.7.0 - 2023-09-08
 
 - fixed: overrides method for Blender 4.0.0

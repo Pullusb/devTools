@@ -55,8 +55,10 @@ class DEV_OT_console_context_area_access(bpy.types.Operator):
             
             if self.console_override:
                 context.window.cursor_set("DEFAULT") # reset cursor
-                # bpy.ops.console.clear_line(self.console_override) # clear line ?
-                bpy.ops.console.insert(self.console_override, text=access)
+                with context.temp_override(**self.override):
+                    # bpy.ops.console.clear_line() # clear line ?
+                    bpy.ops.console.insert(text=access)
+
             return {'FINISHED'}
 
         elif event.type in {'RIGHTMOUSE', 'ESC'}:
