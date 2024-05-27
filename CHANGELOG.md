@@ -1,5 +1,9 @@
 # Changelog
 
+2.7.3 - 2024-05-27
+
+- fixed: add region in text editor context override (needed in some case)
+
 2.7.2 - 2024-02-20
 
 - fixed: override method (Blender 4.0.0) for `Select area`` in console
