@@ -84,11 +84,11 @@ def copy_selected(context):
 
 def print_string_variable(clip,linum=''):
     if linum:
-        line = 'print(":l {1}:{0}", {0})#Dbg'.format(clip, str(linum) )
+        line = 'print(":l {1}: {0} ", {0}) #Dbg'.format(clip, str(linum) )
         ## f-string '=' syntax
         # line = 'print(f":l {1}: {{{0}=}}")#Dbg'.format(clip, str(linum) )
     else:
-        line = 'print("{0}", {0})#Dbg'.format(clip)
+        line = 'print("{0} ", {0}) #Dbg'.format(clip)
         ## f-string '=' syntax
         # line = 'print(f"{{{0}=}}")#Dbg'.format(clip)
     #'print("'+ clip + '", ' + clip + ')#Dbg'
