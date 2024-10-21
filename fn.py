@@ -347,8 +347,9 @@ def missing_external_editor():
     mess = 'External editor command or path should be specified in DevTools addon preferences'
     show_message_box(
         _message=[mess,
-                'Since 4.0.0, you can set editor in preferences > filepath > text editor'
-                ['dev.open_devtools_prefs', 'Open Preferences', 'PREFERENCES']],
+                'Since 4.0.0, you can set editor in preferences > filepath > text editor',
+                ['dev.open_devtools_prefs', 'Open Preferences', 'PREFERENCES'],
+                ],
         _title='No External editor')
     return mess
 

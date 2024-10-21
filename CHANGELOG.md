@@ -1,5 +1,9 @@
 # Changelog
 
+2.7.4 - 2024-10-21
+
+- fixed: error when using unknown external editor
+
 2.7.3 - 2024-05-27
 
 - fixed: add region in text editor context override (needed in some case)

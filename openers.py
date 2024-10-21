@@ -121,7 +121,7 @@ class DEV_OT_open_editor_from_python_command(bpy.types.Operator):
             else:
                 # can't use line if the editor is not known
                 # need formatting according to editor
-                button_row.operator('devtools.open_file_in_editor', text='', icon='TEXT').filepath = path
+                button_row.operator('devtools.open_file_in_editor', text='', icon='TEXT').filepath = str(path)
     
     def execute(self, context):
         return {"FINISHED"}
