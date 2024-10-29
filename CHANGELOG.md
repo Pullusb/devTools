@@ -1,5 +1,9 @@
 # Changelog
 
+2.7.5 - 2024-10-29
+
+- added: GPv3 template in console when using 4.3+
+
 2.7.4 - 2024-10-21
 
 - fixed: error when using unknown external editor

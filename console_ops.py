@@ -117,7 +117,11 @@ class DEV_OT_console_gp_list_2d_pos(bpy.types.Operator):
             return {'CANCELLED'}
         
         # list 2D coord of last stroke of active object
-        text = f'[view3d_utils.location_3d_to_region_2d({areatext}.regions[5], {areatext}.spaces[0].region_3d, C.object.matrix_world @ p.co) for p in C.object.data.layers.active.active_frame.strokes[-1].points]'
+        if bpy.app.version < (4,3,0):
+            text = f'[view3d_utils.location_3d_to_region_2d({areatext}.regions[5], {areatext}.spaces[0].region_3d, C.object.matrix_world @ p.co) for p in C.object.data.layers.active.active_frame.strokes[-1].points]'
+        else:
+            text = f'[view3d_utils.location_3d_to_region_2d({areatext}.regions[5], {areatext}.spaces[0].region_3d, C.object.matrix_world @ p.position) for p in C.object.data.layers.active.current_frame().drawing.strokes[-1].points]'
+
         bpy.ops.console.insert(text=text)
         return {'FINISHED'}
 
@@ -298,7 +302,12 @@ class DEV_MT_console_gp_template_menu(bpy.types.Menu):
 
     def draw(self, context):
         layout = self.layout
-        layout.operator("console.insert", text='GP Point Access').text='C.object.data.layers.active.active_frame.strokes[-1].points[0]' # , icon='GP_SELECT_POINTS'
+        if bpy.app.version < (4,3,0):
+            layout.operator("console.insert", text='GP Point Access').text='C.object.data.layers.active.active_frame.strokes[-1].points[0]' # , icon='GP_SELECT_POINTS'
+        else:
+            layout.operator("console.insert", text='GP Point Access').text='C.grease_pencil.layers.active.current_frame().drawing.strokes[-1].points[0]'
+            layout.operator("console.insert", text='Get current frame').text='current_frame = C.grease_pencil.layers.active.current_frame()'
+
         layout.separator()
         layout.operator("console.insert", text='Import view3d_utils').text='from bpy_extras import view3d_utils'
         
