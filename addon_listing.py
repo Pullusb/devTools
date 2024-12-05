@@ -17,7 +17,9 @@ from bpy.props import (
                     )
 
 from bpy.types import (
+                    Context,
                     Operator,
+                    OperatorProperties,
                     UIList,
                     PropertyGroup,
                     Panel
@@ -284,8 +286,12 @@ class DEV_PT_addon_list_ui(Panel):
 
         col.label(text=f'{len([a for a in pl_prop.addon_list if a.select])}/{len(pl_prop.addon_list)} Selected')
 
-        col.operator("dev.export_addon_zip_pack", icon="FILE_ARCHIVE", text="Export Addon Pack As Zip")
-        col.operator("dev.print_addon_list", icon="CONSOLE", text="Print Selected Infos")
+        # col.operator("dev.export_addon_zip_pack", icon="FILE_ARCHIVE", text="Export Addon Pack As Zip")
+        subcol = col.column(align=True)
+        subcol.operator("dev.export_addon_zip_pack", icon="FILE_ARCHIVE", text="Export Addons Zip Pack").pack = True
+        subcol.operator("dev.export_addon_zip_pack", icon="FILE_ARCHIVE", text="Export Individual Zips").pack = False
+
+        layout.operator("dev.print_addon_list", icon="CONSOLE", text="Print Selected Infos")
         
         ## problem with batch enable. internal targeted addons __name__ variable seem to be wrong when enabling from here
         col = layout.column(align=True)
@@ -314,15 +320,68 @@ class DEV_OT_print_addon_list(Operator):
             print()
         return {"FINISHED"}
 
+def get_addon_version(filepath):
+    """Get addon version from file or folder
+    Args:
+        filepath (Path): Path to addon file or folder
+    Returns:
+        str: version suffix formatted as '-v1_0_0' or empty string if not found
+    """
+    
+    init_version_pattern = r'"version":\s?\((\s?\d+\s?,\s?\d+\s?,\s?\d+\s?)\),'
+    if filepath.is_file():
+        # For single file, search version inside
+        with open(str(filepath), 'r') as fd:
+            text = fd.read()
+        res = re.search(init_version_pattern, text)
+        if res:
+            v = res.group(1)
+            return f'-v{v.replace(",", "_").replace(" ", "")}'
+    else:
+        # For folder, check manifest first then init
+        manifest = filepath / 'blender_manifest.toml'
+        if manifest.exists():
+            with open(str(manifest), 'r') as fd:
+                text = fd.read()
+            res = re.search(r'\bversion\s?=\s?\"(.*?)\"', text)
+            if res:
+                v = res.group(1)
+                return f'-v{v.replace(".", "_").replace(" ", "")}'
+        else:
+            init_file = filepath / '__init__.py'
+            if init_file.exists():
+                with open(str(init_file), 'r') as fd:
+                    text = fd.read()
+                res = re.search(init_version_pattern, text)
+                if res:
+                    v = res.group(1)
+                    return f'-v{v.replace(",", "_").replace(" ", "")}'
+    return ''
+
+## gitignore - Unused for now.
+def get_gitignore_patterns(gitignore_path):
+    """Get exclusion patterns from .gitignore translated to regex"""
+    if not gitignore_path.exists():
+        return []
+    
+    with open(gitignore_path, 'r') as f:
+        patterns = [line.strip() for line in f.readlines() 
+                   if line.strip() and not line.startswith('#')]
+    
+    return r'|'.join([fnmatch.translate(x) for x in patterns])
+
 class DEV_OT_export_addon_zip_pack(Operator, ExportHelper):
     bl_idname = "dev.export_addon_zip_pack"
     bl_label = "Export As Zip Pack"
     bl_description = "Export selected addons as zip pack with custom filters"
-    # bl_options = {"REGISTER", "INTERNAL"}
+    bl_options = {"REGISTER"}
 
-    # @classmethod
-    # def poll(cls, context):
-    #     return context.object and context.object.type == 'GPENCIL'
+    @classmethod
+    def description(cls, context, properties) -> str:
+        if properties.pack:
+            return "Pack all selected addons in a zipped 'addon' folder, with custom filters"
+        else:
+            return "Export selected addons as individual zips with custom filters"
 
     filter_glob: StringProperty(default='*.zip', options={'HIDDEN'}) #*.jpg;*.jpeg;*.png;*.tif;*.tiff;*.bmp
     
@@ -343,13 +402,23 @@ class DEV_OT_export_addon_zip_pack(Operator, ExportHelper):
     exclude_filter : StringProperty(
         name='Exclude', 
         default='',
-        description='Exclusion filter (dirs and files) to avoid zipping some items (can use *wildcards)\nex: *.blend, badname, *.md\nNote: you can set permanent exclusions filter in preferences'
+        description='Exclusion filter (dirs and files) to avoid zipping some items (can use *wildcards)\
+            \nex: *.blend, badname, *.md\
+            \nNote: you can set permanent exclusions filter in preferences'
         )
+
+    respect_gitignore : BoolProperty(
+        name="Respect .gitignore", 
+        description="Respect .gitignore exclusion patterns (only for files, not folder)\
+            \n(Does not work for single pack, only individual zips)",
+        default=True)
 
     include_filter : StringProperty(
         name='Include', 
         default='',
-        description='Include only file matching this comma separated rules (can use *wildcard)\nex: *py, *.md\nnote: exclusion filter is executed before'
+        description='Include only file matching this comma separated rules (can use *wildcard)\
+            \nex: *py, *.md\
+            \nNote: Exclusion filter is executed before inclusion'
         )
 
     compressed : BoolProperty(
@@ -357,10 +426,69 @@ class DEV_OT_export_addon_zip_pack(Operator, ExportHelper):
         description='Choose if zip is made in compress mode or store mode',
         default=True)
 
+    ## Option to zip as separate standalone zips
+    pack : BoolProperty(
+        name='Pack',
+        description='Pack all selected addons in a zipped "addon" folder\
+            \nReady to be unzipped in blender scripts folder',
+        default=True)
+
+    add_version_in_name : BoolProperty(
+        name="Version in zip names", 
+        description="Add addon version number as suffix of zip name",
+        default=True)
+
     def invoke(self, context, event):
-        self.filepath = f'//addon_pack-{time.strftime("%Y_%m_%d")}.zip' # with date: 2022_01_28
+        if self.pack:
+            self.filepath = f'//addon_pack-{time.strftime("%Y_%m_%d")}.zip' # with date: 2022_01_28
+        else:
+            self.filepath = ''
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+
+        layout.label(text="Filters:")
+        layout.prop(self, 'exclude_git_files')
+        layout.prop(self, 'exclude_filter')
+        layout.prop(self, 'include_filter')
+        row = layout.row()
+        row.prop(self, 'respect_gitignore')
+        row.enabled = not self.pack
+        
+        layout.separator()
+        
+        layout.label(text="Export Options:")
+        layout.prop(self, 'compressed')
+        layout.prop(self, 'pack')
+        row = layout.row()
+        row.prop(self, 'add_version_in_name')
+        row.enabled = not self.pack
+
+        ## information for the user
+        box = layout.box()
+        col = box.column(align=True)
+        col.label(text="Infos", icon='INFO')
+        col.separator()
+        if self.pack:
+            col.label(text="All addons packed in a zip")
+            col.label(text="Example hierarchy:")
+            col.separator()
+            # col.label(text=Path(self.filepath).name)
+            col.label(text="pack_name.zip")
+            col.label(text="    |-addons")
+            col.label(text="        |-addon_folder1")
+            col.label(text="        |-addon_folder2")
+            col.label(text="        |-single_file_addon.py")
+        else:
+            col.label(text="Individual zips in current folder")
+            if self.add_version_in_name:
+                col.label(text="ex: addon_name-v1_2_0.zip")
+            col.separator()
+            col.label(text="(Single-files zip name keep '.py')")
 
     def execute(self, context):
         prefs = fn.get_addon_prefs()
@@ -382,17 +510,16 @@ class DEV_OT_export_addon_zip_pack(Operator, ExportHelper):
             self.report({'ERROR'}, f'Nothing to zip')
             return {"CANCELLED"}
 
-
         ## list addon path to zip
         includes = []
-        excludes = []
+        excludes = ['*.pyc', '__pycache__'] # Always exclude pyc and cache
         if self.include_filter:
             includes = [i.strip() for i in self.include_filter.split(',')] # ['*.doc', '*.odt'] # for files only
         if self.exclude_filter:
             excludes = [i.strip() for i in self.exclude_filter.split(',')] # for dirs and files
 
         if self.exclude_git_files:
-            excludes += ['.git', '*.pyc', '.gitignore']
+            excludes += ['.git', '.gitignore', '.gitattributes', '.github', '.vscode']
 
         # add preferences exclusions
         if prefs.devtool_addonpack_exclude:
@@ -409,45 +536,101 @@ class DEV_OT_export_addon_zip_pack(Operator, ExportHelper):
         arc_root_dir =  'addons/'
         
         compress_type = zipfile.ZIP_DEFLATED if self.compressed else zipfile.ZIP_STORED
-        with zipfile.ZipFile(self.filepath, 'w',compress_type) as zipObj:        
+
+        if self.pack:
+            ## Ensure zip pack has a name
+            dest_zip = self.filepath
+            if not self.filepath.endswith(('\\','/')):
+                dest_zip = str(Path(self.filepath) / f'addon_pack-{time.strftime("%Y_%m_%d")}.zip')
+            with zipfile.ZipFile(dest_zip, 'w',compress_type) as zipObj:        
+                for fp in pathes:
+                    if not fp.exists():
+                        print(f'Not exists: {fp.name}')
+                        continue
+                    
+                    if fp.is_file():
+                        arcname = arc_root_dir + fp.name
+                        print(f'adding: {arcname}')
+                        zipObj.write(str(fp), arcname)
+                    
+                    else: # Zip addon structure
+                        start = fp.parent.as_posix()
+                        for root, dirs, files in os.walk(str(fp)):
+                            # exclude dirs
+                            if excludes:
+                                dirs[:] = [d for d in dirs if not re.match(excludes, d)]
+                            # exclude/include files
+                            if excludes:
+                                files = [f for f in files if not re.match(excludes, f)]
+                            if includes:
+                                files = [f for f in files if re.match(includes, f)]
+
+                            for fname in files:
+                                full_path = Path(root) / fname
+                                # remove head start in path
+                                arcname = full_path.as_posix().replace(start, '').lstrip('/')
+                                arcname = arc_root_dir + arcname
+                                # if not '.git/' in arcname and not '__pycache__' in arcname :
+                                #     # don't print all git and cache stuff
+                                #     print(f'adding: {arcname}')
+                                print(f'adding: {arcname}')
+                                zipObj.write(str(full_path), arcname)
+                    print()
+            self.report({'INFO'}, f'Zip saved at: {dest_zip}')
+        else:
+            ## Ensure to unzip at currently viewed folder
+            dest_folder = Path(self.filepath) if self.filepath.endswith(('\\','/')) else Path(self.filepath).parent
+
+            # Individual zip files
             for fp in pathes:
                 if not fp.exists():
                     print(f'Not exists: {fp.name}')
                     continue
-                
-                if fp.is_file():
-                    arcname = arc_root_dir + fp.name
-                    print(f'adding: {arcname}')
-                    zipObj.write(str(fp), arcname)
-                
-                else: # Zip addon structure
-                    start = fp.parent.as_posix()
-                    # BONUS option: Also respect .gitignore if any
-                    for root, dirs, files in os.walk(str(fp)):
-                        # exclude dirs
-                        if excludes:
-                            dirs[:] = [d for d in dirs if not re.match(excludes, d)]
-                        
-                        # exclude/include files
-                        if excludes:
-                            files = [f for f in files if not re.match(excludes, f)]
-                        
-                        if includes:
-                            files = [f for f in files if re.match(includes, f)]
 
-                        for fname in files:
-                            full_path = Path(root) / fname
-                            # remove head start in path
-                            arcname = full_path.as_posix().replace(start, '').lstrip('/')
-                            arcname = arc_root_dir + arcname
-                            # if not '.git/' in arcname and not '__pycache__' in arcname :
-                            #     # don't print all git and cache stuff
-                            #     print(f'adding: {arcname}')
-                            print(f'adding: {arcname}')
-                            zipObj.write(str(full_path), arcname)
-                print()
-        print('End of pack')
-        self.report({'INFO'}, f'Zip saved at: {self.filepath}')
+                ## Zip single file addon or just copy over folder ?
+                addon_name = fp.name # keep '.py' for single files
+                # addon_name = fp.stem
+                
+                version_suffix = ''
+                if self.add_version_in_name:
+                    ## Version retrieval (empty string if not found)
+                    version_suffix = get_addon_version(fp)
+
+                zip_path = dest_folder / f"{addon_name}{version_suffix}.zip"
+                print(f'zipping {addon_name} in {dest_folder}:')
+                with zipfile.ZipFile(zip_path, 'w', compress_type) as zipObj:
+                    if fp.is_file():
+                        print(f'adding: {fp.name}')
+                        zipObj.write(str(fp), fp.name)
+                    else:
+                        ## add gitignore local exclusion
+                        local_excludes = []
+                        if self.respect_gitignore:
+                            if (gitignore_path := fp / '.gitignore').exists():
+                                print(f'Use gitignore excludes: {gitignore_path}')
+                                local_excludes = get_gitignore_patterns(gitignore_path)
+
+                        start = fp.parent.as_posix()
+                        for root, dirs, files in os.walk(str(fp)):
+                            if excludes:
+                                dirs[:] = [d for d in dirs if not re.match(excludes, d)]
+                            if excludes:
+                                files = [f for f in files if not re.match(excludes, f)]
+                            if includes:
+                                files = [f for f in files if re.match(includes, f)]
+
+                            if local_excludes:
+                                # local excludes from gitignore (does not exclude folder)
+                                files = [f for f in files if not re.match(local_excludes, f)]
+
+                            for fname in files:
+                                full_path = Path(root) / fname
+                                arcname = full_path.as_posix().replace(start, '').lstrip('/')
+                                print(f'adding: {arcname}')
+                                zipObj.write(str(full_path), arcname)
+                print(f'Created: {zip_path}\n')
+            self.report({'INFO'}, f'Zip saved at: {dest_folder}')
+        
         return {"FINISHED"}
 
 

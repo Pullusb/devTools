@@ -1,5 +1,10 @@
 # Changelog
 
+2.8.0 - 2024-12-05
+
+added: addon listing can now also export addon selection as individual zips
+added: Partially respect `.gitignore` (only in inidvidual zip mode and limited to file filtering)
+
 2.7.5 - 2024-10-29
 
 - added: GPv3 template in console when using 4.3+
