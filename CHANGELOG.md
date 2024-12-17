@@ -1,5 +1,9 @@
 # Changelog
 
+2.8.1 - 2024-12-17
+
+fixed: broken addon listing search field. Now case insensitive, also search in both addon name and module name
+
 2.8.0 - 2024-12-05
 
 added: addon listing can now also export addon selection as individual zips

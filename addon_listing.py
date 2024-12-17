@@ -185,13 +185,21 @@ class DEV_UL_addon_list(UIList):
 
     def filter_items(self, context, data, propname):
         collec = getattr(data, propname)
-        helper_funcs = bpy.types.UI_UL_list
 
         flt_flags = []
         flt_neworder = []
         if self.filter_name:
-            flt_flags = helper_funcs.filter_items_by_name(self.filter_name.lower(), self.bitflag_filter_item, collec, "name",
-                                                          reverse=self.use_filter_sort_reverse)#self.use_filter_name_reverse)
+            ## Case sensitive 
+            # helper_funcs = bpy.types.UI_UL_list
+            # flt_flags = helper_funcs.filter_items_by_name(self.filter_name, self.bitflag_filter_item, collec, "name",
+            #                                               reverse=self.use_filter_sort_reverse)#self.use_filter_name_reverse)
+
+            ## Case insensitive, also search in both name and modulename
+            flt_flags = [self.bitflag_filter_item 
+                         if self.filter_name.lower() in item.name.lower() 
+                         or self.filter_name.lower() in item.addon_module.lower() 
+                         else 0 
+                         for item in collec]
         return flt_flags, flt_neworder
 
 #--- PROPERTIES
