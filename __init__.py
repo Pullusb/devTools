@@ -2,7 +2,7 @@ bl_info = {
     "name": "dev tools",
     "description": "Add tools in text editor and console to help development",
     "author": "Samuel Bernou",
-    "version": (2, 8, 1),
+    "version": (2, 9, 0),
     "blender": (3, 0, 0),
     "location": "Text editor > toolbar and console header",
     "doc_url": "https://github.com/Pullusb/devTools",
@@ -25,6 +25,7 @@ from . import install_pip_modules
 from . import error_handle
 from . import api_explore
 from . import console_ops
+from . import run_script_in_viewport
 from . import ui
 
 ###---UTILITY funcs
@@ -1051,6 +1052,7 @@ def register():
         )
 
     console_ops.register()
+    run_script_in_viewport.register()
     addon_listing.register()
     ui.register()
 
@@ -1063,6 +1065,7 @@ def unregister():
     api_explore.unregister()
 
     error_handle.unregister()
+    run_script_in_viewport.unregister()
     console_ops.unregister()
     openers.unregister()
     install_pip_modules.unregister()

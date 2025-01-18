@@ -1,13 +1,21 @@
 # Changelog
 
+2.9.0 - 2025-01-18
+
+- added: `Run Script` Panel in `Tool` Tab:
+  - Allow to run scripts in 3D viewport, without needing context override
+  - Button to run currently visible script
+  - list all available scripts
+  - only visible when there are text dadablock in blend
+
 2.8.1 - 2024-12-17
 
-fixed: broken addon listing search field. Now case insensitive, also search in both addon name and module name
+- fixed: broken addon listing search field. Now case insensitive, also search in both addon name and module name
 
 2.8.0 - 2024-12-05
 
-added: addon listing can now also export addon selection as individual zips
-added: Partially respect `.gitignore` (only in inidvidual zip mode and limited to file filtering)
+- added: addon listing can now also export addon selection as individual zips
+- added: Partially respect `.gitignore` (only in inidvidual zip mode and limited to file filtering)
 
 2.7.5 - 2024-10-29
 
