@@ -241,17 +241,40 @@ def get_mod_classes(mod, classes=None, mod_path=None, depth=0):
     if classes is None:
         classes = []
         mod_path = get_module_path(mod)
-    if depth > 2:
+    if depth > 3:
         return
     if not isinstance(mod, ModuleType):
         return
     if not get_module_path(mod).startswith(mod_path):
         return
-    classes += list(getattr(mod, "classes", []))
+    
+    ## old method (works only when classes are stored in a class variables)
+    # classes += list(getattr(mod, "classes", []))
+    # for attr in dir(mod):
+    #     if not attr.startswith('__') and not attr in exclude_mods:
+    #         submod = getattr(mod, attr)
+    #         get_mod_classes(submod, classes=classes, mod_path=mod_path, depth=depth+1)
+
+    # First check for explicit classes list
+    explicit_classes = getattr(mod, "classes", [])
+    classes.extend(explicit_classes)
+    
+    # Then scan module attributes for class definitions
     for attr in dir(mod):
-        if not attr.startswith('__') and not attr in exclude_mods:
-            submod = getattr(mod, attr)
-            get_mod_classes(submod, classes=classes, mod_path=mod_path, depth=depth+1)
+        if attr.startswith('__') or attr in exclude_mods:
+            continue
+            
+        item = getattr(mod, attr)
+        
+        # Check if item is a class defined in this module
+        if (isinstance(item, type) and 
+            hasattr(item, '__module__') and 
+            item.__module__ == mod.__name__):
+            classes.append(item)
+            
+        # Recurse into submodules
+        if isinstance(item, ModuleType):
+            get_mod_classes(item, classes=classes, mod_path=mod_path, depth=depth+1)
     return classes
 
 def get_addon_from_python_command(op_name):
