@@ -248,18 +248,14 @@ def get_mod_classes(mod, classes=None, mod_path=None, depth=0):
     if not get_module_path(mod).startswith(mod_path):
         return
     
-    ## old method (works only when classes are stored in a class variables)
+    ## Old method (works only when classes are stored in a "classes" variables)
     # classes += list(getattr(mod, "classes", []))
     # for attr in dir(mod):
     #     if not attr.startswith('__') and not attr in exclude_mods:
     #         submod = getattr(mod, attr)
     #         get_mod_classes(submod, classes=classes, mod_path=mod_path, depth=depth+1)
 
-    # First check for explicit classes list
-    explicit_classes = getattr(mod, "classes", [])
-    classes.extend(explicit_classes)
-    
-    # Then scan module attributes for class definitions
+    ## Scan module attributes for class definitions
     for attr in dir(mod):
         if attr.startswith('__') or attr in exclude_mods:
             continue
