@@ -4,9 +4,10 @@
 
 - added: `Run Script` Panel in `Tool` Tab:
   - Allow to run scripts in 3D viewport, without needing context override
-  - Button to run currently visible script
+  - Button to run currently opened script
   - list all available scripts
   - only visible when there are text dadablock in blend
+- more robust open source operator
 
 2.8.1 - 2024-12-17
 

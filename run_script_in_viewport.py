@@ -57,9 +57,9 @@ class DEV_OT_run_script_in_viewport(bpy.types.Operator):
         exec_text_datablock(text)
         return {"FINISHED"}
 
-class DEV_OT_run_visible_script(bpy.types.Operator):
-    bl_idname = "dev.run_visible_script"
-    bl_label = "Run Visible Script"
+class DEV_OT_run_opened_script(bpy.types.Operator):
+    bl_idname = "dev.run_opened_script"
+    bl_label = "Run Opened Script"
     bl_description = "Execute the biggest visible script (area size) in viewport context"
     bl_options = {"REGISTER", "INTERNAL"}
 
@@ -67,7 +67,7 @@ class DEV_OT_run_visible_script(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return len(bpy.data.texts) and visible_text_editor_poll()
+        return len(bpy.data.texts) and opened_text_editor_poll()
 
     def execute(self, context):
         text = find_biggest_opened_text_block(all_windows=self.all_windows)
@@ -82,7 +82,7 @@ class DEV_OT_run_visible_script(bpy.types.Operator):
 
 ## -- Panel --
 
-def visible_text_editor_poll():
+def opened_text_editor_poll():
     ## in all windows
     # for window in bpy.context.window_manager.windows 
     #     for area in window.screen.areas:
@@ -94,17 +94,17 @@ def visible_text_editor_poll():
         if area.type == 'TEXT_EDITOR':
             return True
 
-## -- Run Visible Scripts UI --
-def run_visible_script_ui(layout, context):
+## -- Run Opened Scripts UI --
+def run_opened_script_ui(layout, context):
         if len(bpy.data.texts) == 1:
             ## expose the sole script
             name = bpy.data.texts[0].name
             layout.operator('dev.run_script_in_viewport', text=f'Run: {name}', icon='PLAY').txt_name = name
             return
 
-        ## Hide button when no text editor visible ?
-        # if visible_text_editor_poll():
-        layout.operator('dev.run_visible_script', text='Run Visible Script', icon='PLAY').all_windows = False
+        ## Hide button when no text editor opened ?
+        # if opened_text_editor_poll():
+        layout.operator('dev.run_opened_script', text='Run Opened Script', icon='PLAY').all_windows = False
 
 class DEV_PT_run_text_scripts_ui(bpy.types.Panel):
     bl_label = "Run Scripts"
@@ -117,7 +117,7 @@ class DEV_PT_run_text_scripts_ui(bpy.types.Panel):
         return len(bpy.data.texts)
 
     def draw(self, context):
-        run_visible_script_ui(self.layout, context)
+        run_opened_script_ui(self.layout, context)
 
 
 ## -- Script List UI --
@@ -148,20 +148,20 @@ class DEV_PT_script_list_ui(bpy.types.Panel):
 #     """Show button to launch biggset visible script in header"""
 #     if not len(bpy.data.texts):
 #         return
-#     if visible_text_editor_poll():
-#         run_visible_script_ui(self.layout, context)
+#     if opened_text_editor_poll():
+#         run_opened_script_ui(self.layout, context)
 #     script_list_ui(self.layout, context)
 
-## Add to header (need a poll to hide when no text editor is visible)
-def run_visible_script_header_ui(self, context):
+## Add to header (need a poll to hide when no text editor is opened)
+def run_opened_script_header_ui(self, context):
     """Show button to launch biggset visible script in header"""
-    if not visible_text_editor_poll():
+    if not opened_text_editor_poll():
         return
-    self.layout.operator('dev.run_visible_script', text='', icon='PLAY')
+    self.layout.operator('dev.run_opened_script', text='', icon='PLAY')
 
 classes = (
 DEV_OT_run_script_in_viewport,
-DEV_OT_run_visible_script,
+DEV_OT_run_opened_script,
 DEV_PT_run_text_scripts_ui,
 DEV_PT_script_list_ui,
 )
@@ -169,9 +169,9 @@ DEV_PT_script_list_ui,
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
-    # bpy.types.VIEW3D_HT_header.append(run_visible_script_header_ui) # add to viewport header
+    # bpy.types.VIEW3D_HT_header.append(run_opened_script_header_ui) # add to viewport header
 
 def unregister():
-    # bpy.types.VIEW3D_HT_header.remove(run_visible_script_header_ui) # add to viewport header
+    # bpy.types.VIEW3D_HT_header.remove(run_opened_script_header_ui) # add to viewport header
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
