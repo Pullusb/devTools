@@ -316,6 +316,16 @@ class DEV_MT_console_gp_template_menu(bpy.types.Menu):
         layout.operator("devtools.console_gp_2d_to_3d", text='GP 2D to 3D') # , icon='VIEW3D'
         layout.operator("devtools.console_gp_3d_to_2d", text='GP 3D to 2D') # , icon='STICKY_UVS_LOC'
 
+class DEV_MT_console_animation_template_menu(bpy.types.Menu):
+    bl_label = "Animation Templates"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.operator("console.insert", text='Fcurve Acces').text='fcurves = C.object.animation_data.action.fcurves'
+        layout.operator("console.insert", text='List Fcurves').text="loc_fcs = [fc for fc in C.object.animation_data.action.fcurves if fc.data_path == 'location'] # and fc.array_index == 0"
+        layout.operator("console.insert", text='Find Fcurve').text="C.object.animation_data.action.fcurves.find('location', index=0)"
+        layout.operator("console.insert", text='Summary Frame Number').text="{k.co.x for fc in C.object.animation_data.action.fcurves for k in fc.keyframe_points} # set of frame number (float)"
+
 class DEV_MT_console_path_template_menu(bpy.types.Menu):
     bl_label = "GPencil Templates"
 
@@ -335,6 +345,7 @@ class DEV_MT_console_template(bpy.types.Menu):
         layout = self.layout
         # layout.operator("wm.call_menu", text="Gpencil").name = "DEV_MT_console_gp_template_menu"
         layout.menu("DEV_MT_console_gp_template_menu", text="Gpencil")
+        layout.menu("DEV_MT_console_animation_template_menu", text="Animation")
         layout.menu("DEV_MT_console_path_template_menu", text="List Path")
         # layout.operator("devtools.console_insert_and_exec", text='Classic Imports').text='import os, re, fnmatch, glob\nfrom pathlib import Path\nfrom pprint import pprint as pp'
         layout.operator("devtools.console_insert_import", text='Usual Imports')
@@ -425,6 +436,7 @@ classes = (
 
     DEV_MT_console_path_template_menu,
     DEV_MT_console_gp_template_menu,
+    DEV_MT_console_animation_template_menu,
     DEV_MT_console_dev,
     DEV_MT_console_template
 )
