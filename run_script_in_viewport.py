@@ -1,6 +1,7 @@
 import bpy
 
 # Run text data block from viewport (allow to run in a 3D view context, without the neede of an override)
+## FIXME: can fail with imports in scripts, ex: from mathutils import Vector. try to launch using run_script with override
 
 def find_biggest_opened_text_block(all_windows=True):
     '''get text used in the biggest visible text editor area, skip empty texts

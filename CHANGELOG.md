@@ -1,5 +1,12 @@
 # Changelog
 
+
+2.9.1 - 2025-02-05
+
+- added: button to show `Locals` variable in traceback view. Can help debug
+- added: option to `Copy Traceback` message from the traceback popup window (with info on local variables).
+- changed: using key event tester add key name to clipboard by default (previously needed to `Ctrl + click` on ops. inverted behavior, Ctrl+Click is now used "Not to copy")
+
 2.9.0 - 2025-01-18
 
 - added: `Run Script` Panel in `Tool` Tab:

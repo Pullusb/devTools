@@ -17,7 +17,7 @@ def get_last_traceback(to_clipboad=False) -> Tuple[int, str]:
 
     if hasattr(sys, "last_traceback") and sys.last_traceback:
         i = 0
-        last=sys.last_traceback.tb_next
+        last = sys.last_traceback.tb_next
         tbo = None
         while last:
             i+=1
@@ -27,38 +27,53 @@ def get_last_traceback(to_clipboad=False) -> Tuple[int, str]:
                 print()
                 return (1, "bad recursion")
 
-        if not tbo: tbo = sys.last_traceback
+        if not tbo:
+            tbo = sys.last_traceback
 
-        linum = sys.last_traceback.tb_lineno# first linum
-        message += f'from line {str(linum)}\n'
+        if hasattr(sys, "last_type") and sys.last_type:
+            error_type = str(sys.last_type)
+            error_type = error_type.replace("<class '", "").replace("'>","")
+            # message += f'{error_type}\n'
+            message += f'type : {error_type}\n'
 
-        frame = str(tbo.tb_frame)
-        if frame:
-            if 'file ' in frame:
-                # frame = 'file: ' + frame.split('file ')[1]
-                frame = '\n'.join(frame.split(', ')[1:3])
-            message += f'{frame}\n'
+        if hasattr(sys, "last_value") and sys.last_value:
+            # message += f'{sys.last_value}\n'
+            message += f'error: {sys.last_value}\n'
 
+
+        # linum = sys.last_traceback.tb_lineno # first linum # Added to message in frame below
+        # message += f'from line {str(linum)}\n'
+
+        ## Simple and naive extraction method from traceback as str: elements 1 is the file path, 2 is the line number
+        # frame = str(tbo.tb_frame)
+        # if frame:
+        #     ## Example of a frame as str: <frame at 0x000001EEE07530F0, file 'C:\\Users\\samue\\AppData\\Roaming\\Blender Foundation\\Blender\\4.4\\scripts\\addons\\storytools\\keymaps.py', line 221, code execute>
+        #     if 'file ' in frame:
+        #         # frame = 'file: ' + frame.split('file ')[1]
+        #         frame = '\n'.join(frame.split(', ')[1:3])
+        
+        if frame := tbo.tb_frame:
+            ## line is either in tbo.tb_lineno or in tbo.tb_frame.f_lineno
+            ## file url is in "tbo.tb_frame.f_code.co_filename"
+            message += f"file : {Path(frame.f_code.co_filename).as_posix()}\n"
+            message += f"line : {frame.f_lineno}\n"
+
+            ## Frame contains local variables as dict in "tb_frame.f_locals" can be useful to debug 
+            if frame.f_locals:
+                message += '\nLocals:\n'
+                for k, v in frame.f_locals.items():
+                    message += f'  {k} : {v}\n'
     else:
         print()
         return (1, 'No error traceback found by sys module')
 
-    if hasattr(sys, "last_type") and sys.last_type:
-        error_type = str(sys.last_type)
-        error_type = error_type.replace("<class '", "").replace("'>","")
-        message =  f'type {error_type}\n{message}'
-
-    if hasattr(sys, "last_value") and sys.last_value:
-        message += f'error : {str(sys.last_value)}\n'
-
-        if not linum and hasattr(sys.last_value, "lineno"):# maybe not usefull
-            print('use "last_value" line num')
-            message += f'line {str(sys.last_value.lineno)}\n'
+        # if not linum and hasattr(sys.last_value, "lineno"): # already set in frame alanysis
+        #     print('use "last_value" line num')
+        #     message += f'\nline {str(sys.last_value.lineno)}\n'
 
     if not message :
-        print()
         return (1, 'No message to display')
-
+    
     if message and to_clipboad:
         bpy.context.window_manager.clipboard = message
 
@@ -190,6 +205,9 @@ class DEV_OT_open_error_file(bpy.types.Operator):
 
             always_resolve = False # Only resolve on symlink
             for t in tb_list:
+
+                ## available in t (summary traceback frame):
+                ## '_line', '_original_line', 'colno', 'end_colno', 'end_lineno', 'filename', 'line', 'lineno', 'locals', 'name'
                 # if bpy.data.filepath and t.filename.startswith(bpy.data.filepath):
 
                 file_path = Path(t.filename)
@@ -215,6 +233,13 @@ class DEV_OT_open_error_file(bpy.types.Operator):
             error_value = sys.last_value
             if error_value:
                 self.error_desc = f'{error_type} : {str(error_value)}\n'
+            
+            # Get locals
+            self.locals_as_text = None
+            if last_traceback := sys.last_traceback:
+                if frame := last_traceback.tb_frame:
+                    if locals := frame.f_locals:
+                        self.locals_as_text = '\n'.join([f'{k} : {v}' for k, v in locals.items()])
 
         if not self.error_list:
             self.report({'ERROR'}, 'No filepath and line number found in clipboard')
@@ -225,10 +250,12 @@ class DEV_OT_open_error_file(bpy.types.Operator):
     def draw(self, context):
         layout = self.layout
         col = layout.column()
+
+        # error_clipboard = []
         for item in self.error_list:
+            # 0:file_path, 1:line_num, 2:line_content, 3:func_name
             path, line = item[0], item[1]
                 
-            # print(path, '  ', line)
             goto_line = f'{path}:{line}'
             box = col.box()
             boxcol = box.column()
@@ -242,14 +269,23 @@ class DEV_OT_open_error_file(bpy.types.Operator):
             op.use_external = True
             boxcol.label(text=path)
             if len(item) > 3 and item[3]:
+                # function name
                 boxcol.label(text=f'in: {item[3]}')
             if len(item) > 2 and item[2]:
+                # line body
                 boxcol.label(text=item[2])
+
             col.separator()
 
         row = layout.row()
         row.alignment = 'LEFT'
         row.operator('devtools.clear_last_traceback', text='Clear Traceback', icon='CANCEL')
+        row.operator('devtools.copy_last_traceback', text='Copy Traceback', icon='COPYDOWN')
+        
+        ## Show locals
+        op = row.operator('devtools.info_note', text='Locals', icon='INFO')
+        op.title = 'Locals'
+        op.text = self.locals_as_text
 
         if self.error_desc:
             for l in self.error_desc.split('\n'):

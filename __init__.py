@@ -19,6 +19,7 @@ from time import strftime
 from pathlib import Path
 
 from . import fn
+from . import utility_ops
 from . import addon_listing
 from . import openers
 from . import install_pip_modules
@@ -734,7 +735,8 @@ class DEV_OT_blender_info(bpy.types.Operator):
 class DEV_OT_key_printer(bpy.types.Operator):
     bl_idname = "devtools.keypress_tester"
     bl_label = "Key Event Tester"
-    bl_description = "Any key event name will be printed in console (press ESC to stop modal)\nCtrl + Click: copy name to clipboard "
+    bl_description = "Any key event name will be printed in console (press ESC to stop modal)\
+        \nCtrl + Click: prevent copy of key name to clipboard"
     bl_options = {"REGISTER", "UNDO"}
 
     def modal(self, context, event):
@@ -771,7 +773,7 @@ class DEV_OT_key_printer(bpy.types.Operator):
 
     def invoke(self, context, event):
         ## Starts the modal
-        self.copy_key = event.ctrl
+        self.copy_key = not event.ctrl
         print('\n--- KEYCODE PRINT STARTED -- press ESC to stop---')#Dbg
         self.report({'INFO'}, 'keycode print started (ESC to stop), see console for details')
         context.window_manager.modal_handler_add(self)
@@ -801,7 +803,7 @@ class DEV_OT_create_context_override(bpy.types.Operator):
                     if self.is_console:# launched from console
                         access = f"override = {{'screen': C.window.screen, 'area': C.window.screen.areas[{i}]}}"
                         print(access)
-                        if event.shift:# <- Shift click condition to paper clip
+                        if event.ctrl:# <- condition to paper clip
                             context.window_manager.clipboard = access
                         else:
                             with context.temp_override(**self.override):
@@ -823,7 +825,7 @@ class DEV_OT_create_context_override(bpy.types.Operator):
 with bpy.context.temp_override(**get_override()):
     # contextual ops here
 '''                     
-                        if event.shift:# <- Shift click condition to paper clip
+                        if event.ctrl:# <- condition to paper clip
                             context.window_manager.clipboard = access
                         else:
                             with context.temp_override(**self.override):
@@ -1023,6 +1025,7 @@ def register():
     if bpy.app.background:
         return
 
+    utility_ops.register()
     openers.register()
     install_pip_modules.register()
     error_handle.register()
@@ -1069,6 +1072,7 @@ def unregister():
     console_ops.unregister()
     openers.unregister()
     install_pip_modules.unregister()
+    utility_ops.unregister()
     
     del bpy.types.Scene.enum_DebugPrint
     
