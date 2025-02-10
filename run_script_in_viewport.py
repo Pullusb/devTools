@@ -33,7 +33,12 @@ def find_biggest_opened_text_block(all_windows=True):
 def exec_text_datablock(text):
     text_name = text.name
     text_body = '\n'.join([line.body for line in text.lines])
-    exec(compile(text_body, text_name, 'exec'))
+    ## Error, some import or function are ignored using this method, missing context
+    # exec(compile(text_body, text_name, 'exec'))
+    ## Adding globals
+    namespace = {}
+    namespace.update(globals())
+    exec(compile(text_body, text_name, 'exec'), namespace, namespace)
 
 ## -- Operators --
 

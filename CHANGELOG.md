@@ -1,6 +1,10 @@
 # Changelog
 
 
+2.9.2 - 2025-02-10
+
+- fixed: `Run Script` in viewport missing context and failing to launch scripts
+
 2.9.1 - 2025-02-05
 
 - added: button to show `Locals` variable in traceback view. Can help debug
