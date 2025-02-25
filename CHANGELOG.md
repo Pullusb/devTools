@@ -1,5 +1,8 @@
 # Changelog
 
+3.0.0 - 2025-02-25
+
+- added: `Run Script` editor list choice to run scripts from any editors header
 
 2.9.2 - 2025-02-10
 
