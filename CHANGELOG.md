@@ -1,5 +1,9 @@
 # Changelog
 
+3.0.1 - 2025-03-03
+
+- fixed: error with run script UI in editor. area toggle properties are now generated dynamically
+
 3.0.0 - 2025-02-25
 
 - added: `Run Script` editor list choice to run scripts from any editors header

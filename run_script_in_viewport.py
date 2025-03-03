@@ -212,8 +212,23 @@ class DEV_PT_editor_list_ui(bpy.types.Panel):
     def draw(self, context):
         draw_editor_visibility_ui(self.layout, context)
 
-## TODO add an update to all properties to refresh the whole UI
+# dynamic creation of the property group with all area types with associated boolproperties
+def create_property_group_with_annotations(property_list: list[dict[str, str]]):
+    attrs = {}
+    annotations = {}
 
+    for prop in property_list:
+        annotations[prop['identifier'].lower()] = bpy.props.BoolProperty(name=prop['name'])
+
+    attrs["__annotations__"] = annotations
+    
+    return type('DEV_PG_editor_visibility', (bpy.types.PropertyGroup,), attrs)
+
+DEV_PG_editor_visibility = create_property_group_with_annotations(
+    [{'name' : a.name, 'identifier' : a.identifier} for a in bpy.types.Area.bl_rna.properties['type'].enum_items if a.identifier != 'EMPTY'])
+    # {'name': 'View 3d', 'type': 'bool', 'description': 'Display Run script button in View 3d'},
+
+""" # Hardcoded area properties, replaced by dynamic creation above
 ## Properties as a separate file ?
 class DEV_PG_editor_visibility(bpy.types.PropertyGroup):
     view_3d : bpy.props.BoolProperty(name="View 3d", default=False, description="Display Run script button in View 3d")
@@ -233,7 +248,8 @@ class DEV_PG_editor_visibility(bpy.types.PropertyGroup):
     file_browser : bpy.props.BoolProperty(name="File Browser", default=False, description="Display Run script button in File Browser")
     preferences : bpy.props.BoolProperty(name="Preferences", default=False, description="Display Run script button in Preferences")
     text_editor : bpy.props.BoolProperty(name="Text Editor", default=False, description="Display Run script button in Text Editor")
-    ## TODO: add a "All" property with an update to toggle all the others (assign without retriggering their own update)
+    spreadsheet : bpy.props.BoolProperty(name="Spreadsheet Editor", default=False, description="Display Run script button in Spreadsheet Editor")
+"""
 
 def draw_editor_visibility_ui(layout, context):
     col = layout.column(align=True)
@@ -296,8 +312,8 @@ def run_opened_script_header_ui(self, context):
 
 # Or all in the same function comparing type:
 def editor_header(self, context):
-    area = bpy.context.area
-    if getattr(bpy.context.scene.dev_editor_visibility, area.type.lower()):
+    area = context.area
+    if getattr(context.scene.dev_editor_visibility, area.type.lower(), None):
         run_opened_script_header_ui(self, context)
 
 classes = (
