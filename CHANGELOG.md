@@ -1,5 +1,9 @@
 # Changelog
 
+3.1.0 - 2025-05-06
+
+- added: "hello world" operator to print message in console (Helpful when you have many Blender open and many consoles)
+
 3.0.1 - 2025-03-03
 
 - fixed: error with run script UI in editor. area toggle properties are now generated dynamically

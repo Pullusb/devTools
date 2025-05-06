@@ -3,6 +3,7 @@ import bpy
 import os
 import sys
 import re
+import time
 from pathlib import Path
 import traceback
 import subprocess
@@ -114,6 +115,17 @@ class DEV_OT_artificial_error(bpy.types.Operator):
     def execute(self, context):
         ## Trigger zero Division Error
         provoked_error = 2/0
+        return {"FINISHED"}
+
+class DEV_OT_hello_world(bpy.types.Operator):
+    bl_idname = "devtools.hello_world"
+    bl_label = "Hello World"
+    bl_description = "Write Hello World message in console (help find associated console when multiple ones are open)"
+    bl_options = {"REGISTER"}
+
+    def execute(self, context):
+
+        print(f"\n***\nHello world! - Blender {bpy.app.version_string}({bpy.app.version_cycle}) - {time.strftime('%H:%M:%S')}\n***")
         return {"FINISHED"}
 
 class DEV_OT_clear_last_traceback(bpy.types.Operator):
@@ -319,6 +331,7 @@ def help_error_menu(self, context):
 classes = (
     DEV_OT_open_error_file,
     DEV_OT_artificial_error,
+    DEV_OT_hello_world,
     DEV_OT_copy_last_traceback,
     DEV_OT_clear_last_traceback,
 )
