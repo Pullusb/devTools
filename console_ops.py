@@ -306,7 +306,9 @@ class DEV_MT_console_gp_template_menu(bpy.types.Menu):
             layout.operator("console.insert", text='GP Point Access').text='C.object.data.layers.active.active_frame.strokes[-1].points[0]' # , icon='GP_SELECT_POINTS'
         else:
             layout.operator("console.insert", text='GP Point Access').text='C.grease_pencil.layers.active.current_frame().drawing.strokes[-1].points[0]'
-            layout.operator("console.insert", text='Get current frame').text='current_frame = C.grease_pencil.layers.active.current_frame()'
+            layout.operator("console.insert", text='Get Current Frame').text='current_frame = C.grease_pencil.layers.active.current_frame()'
+            layout.operator("console.insert", text='Get Current Drawing').text='dr = C.grease_pencil.layers.active.current_frame().drawing'
+            layout.operator("console.insert", text='Get Last Stroke').text='s = C.grease_pencil.layers.active.current_frame().drawing.strokes[-1]'
 
         layout.separator()
         layout.operator("console.insert", text='Import view3d_utils').text='from bpy_extras import view3d_utils'

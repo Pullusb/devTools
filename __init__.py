@@ -2,7 +2,7 @@ bl_info = {
     "name": "dev tools",
     "description": "Add tools in text editor and console to help development",
     "author": "Samuel Bernou",
-    "version": (3, 1, 0),
+    "version": (3, 2, 0),
     "blender": (3, 0, 0),
     "location": "Text editor > toolbar and console header",
     "doc_url": "https://github.com/Pullusb/devTools",
