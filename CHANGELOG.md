@@ -1,5 +1,9 @@
 # Changelog
 
+3.2.0 - 2025-06-15
+
+- added: some GP console templates
+
 3.1.0 - 2025-05-06
 
 - added: "hello world" operator to print message in console (Helpful when you have many Blender open and many consoles)
