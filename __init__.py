@@ -2,7 +2,7 @@ bl_info = {
     "name": "dev tools",
     "description": "Add tools in text editor and console to help development",
     "author": "Samuel Bernou",
-    "version": (3, 2, 1),
+    "version": (3, 2, 2),
     "blender": (3, 0, 0),
     "location": "Text editor > toolbar and console header",
     "doc_url": "https://github.com/Pullusb/devTools",
@@ -782,7 +782,9 @@ class DEV_OT_key_printer(bpy.types.Operator):
 class DEV_OT_create_context_override(bpy.types.Operator):
     bl_idname = "devtools.create_context_override"
     bl_label = "Context Override"
-    bl_description = "Create a context override function for text editor (quick inline in console) in related to clicked area\n(shift+clic to insert in clipboard)"
+    bl_description = "Create a context override function for text editor (quick inline in console) in related to clicked area\
+        \nCtrl + Clic to insert in clipboard\
+        \nConsole: Shift + Clic to get only override dict (without temp override)"
     bl_options = {"REGISTER", "INTERNAL"}
 
     def invoke(self, context, event):
@@ -802,13 +804,23 @@ class DEV_OT_create_context_override(bpy.types.Operator):
 
                     if self.is_console:# launched from console
                         access = f"override = {{'screen': C.window.screen, 'area': C.window.screen.areas[{i}]}}"
+                        if not event.shift:
+                            # by default, add temp_override line
+                            access += '\nwith C.temp_override(**override):'
+
                         print(access)
                         if event.ctrl:# <- condition to paper clip
                             context.window_manager.clipboard = access
                         else:
                             with context.temp_override(**self.override):
                                 bpy.ops.console.clear_line() # clear line
-                                bpy.ops.console.insert(text=access)
+                                ## Add all lines one by one (execute all exept last)
+                                access_lines = access.splitlines()
+                                for i, line in enumerate(access_lines):
+                                    bpy.ops.console.insert(text=line)
+                                    if i + 1 < len(access_lines):
+                                        # Execute all lines except last one
+                                        bpy.ops.console.execute()
                     
                     else:# launched from text editor
                     

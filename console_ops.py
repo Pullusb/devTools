@@ -18,7 +18,8 @@ def get_viewport_area_text(context):
 class DEV_OT_console_context_area_access(bpy.types.Operator):
     bl_idname = "devtools.console_context_area_access"
     bl_label = "Access Clicked Area"
-    bl_description = "Launch then clic in any area to write access to it in console (with current layout)\nshift+clic on area to copy to clipboard"
+    bl_description = "Launch then clic in any area to write access to it in console (with current layout)\
+        \nShift + Clic on area to copy to clipboard"
     bl_options = {"REGISTER", "INTERNAL"}
 
     def invoke(self, context, event):
