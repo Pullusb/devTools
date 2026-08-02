@@ -303,7 +303,7 @@ class DEV_MT_console_gp_template_menu(bpy.types.Menu):
 
     def draw(self, context):
         layout = self.layout
-        if bpy.app.version < (4,3,0):
+        if bpy.app.version < (4, 3, 0):
             layout.operator("console.insert", text='GP Point Access').text='C.object.data.layers.active.active_frame.strokes[-1].points[0]' # , icon='GP_SELECT_POINTS'
         else:
             layout.operator("console.insert", text='GP Point Access').text='C.grease_pencil.layers.active.current_frame().drawing.strokes[-1].points[0]'
@@ -324,13 +324,44 @@ class DEV_MT_console_animation_template_menu(bpy.types.Menu):
 
     def draw(self, context):
         layout = self.layout
-        layout.operator("console.insert", text='Fcurve Acces').text='fcurves = C.object.animation_data.action.fcurves'
-        layout.operator("console.insert", text='List Fcurves').text="loc_fcs = [fc for fc in C.object.animation_data.action.fcurves if fc.data_path == 'location'] # and fc.array_index == 0"
-        layout.operator("console.insert", text='Find Fcurve').text="C.object.animation_data.action.fcurves.find('location', index=0)"
-        layout.operator("console.insert", text='Summary Frame Number').text="{k.co.x for fc in C.object.animation_data.action.fcurves for k in fc.keyframe_points} # set of frame number (float)"
+        if bpy.app.version < (5, 0, 0):
+            layout.operator("console.insert", text='Fcurve Acces').text='fcurves = C.object.animation_data.action.fcurves'
+            layout.operator("console.insert", text='List Fcurves').text="loc_fcs = [fc for fc in C.object.animation_data.action.fcurves if fc.data_path == 'location'] # and fc.array_index == 0"
+            layout.operator("console.insert", text='Find Fcurve').text="C.object.animation_data.action.fcurves.find('location', index=0)"
+            layout.operator("console.insert", text='Summary Frame Number').text="{k.co.x for fc in C.object.animation_data.action.fcurves for k in fc.keyframe_points} # set of frame number (float)"
+        else:
+            ## slotted actions: fcurves live in a channelbag (per action slot)
+            layout.operator("console.insert", text='Import anim_utils').text='from bpy_extras import anim_utils'
+            layout.operator("console.insert", text='Active Slot').text='slot = C.object.animation_data.action_slot'
+            layout.operator("console.insert", text='Channelbag Access').text='cb = C.object.animation_data.action.layers[0].strips[0].channelbag(C.object.animation_data.action_slot) # or .channelbags[0]'
+            layout.operator("console.insert", text='Channelbag Access (anim_utils)').text='from bpy_extras.anim_utils import action_get_channelbag_for_slot; cb = action_get_channelbag_for_slot(C.object.animation_data.action, C.object.animation_data.action_slot)'
+            layout.separator()
+            layout.operator("console.insert", text='Fcurve Acces').text='fcurves = C.object.animation_data.action.layers[0].strips[0].channelbag(C.object.animation_data.action_slot).fcurves'
+            layout.operator("console.insert", text='List Fcurves').text="loc_fcs = [fc for fc in fcurves if fc.data_path == 'location'] # and fc.array_index == 0"
+            layout.operator("console.insert", text='Find Fcurve').text="fcurves.find('location', index=0)"
+            layout.operator("console.insert", text='Summary Frame Number').text="{k.co.x for fc in fcurves for k in fc.keyframe_points} # set of frame number (float)"
+
+class DEV_MT_console_math_template_menu(bpy.types.Menu):
+    bl_label = "Math Templates"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.operator("console.insert", text='3 Basic Vectors').text='vx = Vector((1, 0, 0)); vy = Vector((0, 1, 0)); vz = Vector((0, 0, 1))'
+        layout.operator("console.insert", text='Vector x').text='vx = Vector((1, 0, 0))'
+        layout.operator("console.insert", text='Vector y').text='vy = Vector((0, 1, 0))'
+        layout.operator("console.insert", text='Vector z').text='vz = Vector((0, 0, 1))'
+        layout.operator("console.insert", text='Vector -z').text='v = Vector((0, 0, -1))'
+        layout.separator()
+        layout.operator("console.insert", text='Get region3d').text="rv3d = next((a for a in C.window.screen.areas if a.type == 'VIEW_3D')).spaces.active.region_3d"
+        layout.operator("console.insert", text='View Matrix').text="view_mat = next((a for a in C.window.screen.areas if a.type == 'VIEW_3D')).spaces.active.region_3d.view_matrix.copy() # copy get fixed values"
+        layout.operator("console.insert", text='View Rotation').text="view_quat = next((a for a in C.window.screen.areas if a.type == 'VIEW_3D')).spaces.active.region_3d.view_rotation.copy() # copy get fixed values"
+
+        ## get view direction vector of the first found 3D viewport (unit vector pointing into the screen)
+        layout.operator("devtools.console_insert_and_exec", text='Get View Vector (multiline)').text="area = next((a for a in C.window.screen.areas if a.type == 'VIEW_3D'), None)\nrv3d = area.spaces.active.region_3d\nview_vector = rv3d.view_rotation @ Vector((0, 0, -1))\nview_vector"
+
 
 class DEV_MT_console_path_template_menu(bpy.types.Menu):
-    bl_label = "GPencil Templates"
+    bl_label = "Path Templates"
 
     def draw(self, context):
         layout = self.layout
@@ -347,11 +378,14 @@ class DEV_MT_console_template(bpy.types.Menu):
     def draw(self, context):
         layout = self.layout
         # layout.operator("wm.call_menu", text="Gpencil").name = "DEV_MT_console_gp_template_menu"
+        layout.menu("DEV_MT_console_math_template_menu", text="Maths")
         layout.menu("DEV_MT_console_gp_template_menu", text="Gpencil")
         layout.menu("DEV_MT_console_animation_template_menu", text="Animation")
         layout.menu("DEV_MT_console_path_template_menu", text="List Path")
+
         # layout.operator("devtools.console_insert_and_exec", text='Classic Imports').text='import os, re, fnmatch, glob\nfrom pathlib import Path\nfrom pprint import pprint as pp'
         layout.operator("devtools.console_insert_import", text='Usual Imports')
+        layout.operator("console.insert", text='Set Cursor Location', icon='CURSOR').text='C.scene.cursor.location = '
 
 class DEV_MT_console_dev(bpy.types.Menu):
     bl_label = "Dev"
@@ -389,9 +423,9 @@ def devtool_console(self, context):
     layout = self.layout
     layout.menu('DEV_MT_console_template')
     layout.menu('DEV_MT_console_dev')
+    # layout.operator("console.insert", text='', icon='CURSOR').text='C.scene.cursor.location'
     layout.operator('devtools.console_context_area_access', text='Select Area')
     layout.operator("devtools.create_context_override")
-    
 
 ## --- KEYMAP
 
@@ -437,6 +471,7 @@ classes = (
     DEV_OT_copy_console_history_select,
     # DEV_PT_console_history_lines, # direct panel
 
+    DEV_MT_console_math_template_menu,
     DEV_MT_console_path_template_menu,
     DEV_MT_console_gp_template_menu,
     DEV_MT_console_animation_template_menu,
